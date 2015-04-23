@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MEL Allowed Chemistry Experiments Viewer</title>
+  <script src="jquery.js"></script>
+</head>
+<body>
+ 
+<div id="container">
+  <div id="sample" style="border:1px solid black; margin: 10px; width: 292px; height: 284px; display: inline-block; background-color: gray; -webkit-print-color-adjust: exact; position: relative;">
+    <div id="title" style="color: white; width: 282px; margin-top: 2px; font-size: 15px; font-family: Arial; text-align: center; position: absolute; top: 3px; left: 5px;">Title</div>
+    <div id="chemicalequation" style="color: white; width: 175px; font-size: 9px; font-family: Arial; position: absolute; top: 45px; left: 7px; ">chemicalequation</div>
+    <div id="category" style="color: white; width: 100px; font-size: 9px; font-family: Arial; position: absolute; top: 45px; left: 185px; text-align: right; ">category</div>
+    <div id="descriptivename" style="color: white; width: 282px; font-size: 9px; font-family: Arial; position: absolute; top: 85px; left: 5px; overflow:hidden; height: 10px; text-overflow: ellipsis;">descriptivename</div>
+    <img id="thumbnail" src="" width="240" height="180" style="position: absolute; top: 104px; left: 0px">
+    <table width="52" height="180" style="position: absolute; top: 104px; left: 240px; border: 2px solid black; border-collapse: collapse;">
+      <tr><td style="border: 2px solid black; text-align: center; font-size: 15px; font-family: Arial; background-color: black; color: white; height: 41px;"><div id="totalscore" style="font-size: 30px; padding: 0px; margin: 0px;">0</div></td></tr>
+      <tr><td style="border: 2px solid black; text-align: center; font-size: 15px; font-family: Arial; background-color: white; color: black; height: 40px;"><div id="safety" style="font-size: 28px; padding: 0px; margin: 0px;">0</div><div style="margin: 0px; padding: 0px; color: gray; font-size: 6px; font-family: Arial; ">safety</div></td></tr>
+      <tr><td style="border: 2px solid black; text-align: center; font-size: 15px; font-family: Arial; background-color: white; color: black; height: 41px;"><div id="coolness" style="font-size: 28px; padding: 0px; margin: 0px;">0</div><div style="margin: 0px; padding: 0px; color: gray; font-size: 6px; font-family: Arial; ">coolness</div></td></tr>
+      <tr><td style="border: 2px solid black; text-align: center; font-size: 15px; font-family: Arial; background-color: white; color: black; height: 41px;"><div id="awarness" style="font-size: 28px; padding: 0px; margin: 0px;">0</div><div style="margin: 0px; padding: 0px; color: gray; font-size: 6px; font-family: Arial; ">awarness</div></td></tr>
+    </table>
+  </div>
+</div>
+ 
+<script type="text/javascript">
+function addExperiment(title, chemicalequation, descriptivename, category, experimentclass, video, videoforthumbnail, safety, coolness, awarness, totalscore) {
+  var copy = $("#sample").clone();
+  copy.find("#title").html(title);
+  copy.find("#descriptivename").html(descriptivename);
+  var pos = video.indexOf("?v=");
+  if (pos!=-1) {
+    console.log(video);
+    var youtubeId = video.substring(pos+3);
+    console.log(youtubeId);    
+    copy.find("#thumbnail").attr("src","http://img.youtube.com/vi/" + youtubeId + "/0.jpg");
+  } else {
+    var pos = videoforthumbnail.indexOf("?v=");
+    if (pos!=-1) {
+      var youtubeId = videoforthumbnail.substring(pos+3);
+      copy.find("#thumbnail").attr("src","http://img.youtube.com/vi/" + youtubeId + "/0.jpg");
+    }
+  }
+  copy.find("#safety").html(safety);
+  copy.find("#coolness").html(coolness);
+  copy.find("#awarness").html(awarness);
+  copy.find("#totalscore").html(totalscore);
+  copy.find("#chemicalequation").html(chemicalequation);
+  copy.find("#category").html("[" + category + "]");
+  $(copy).attr("id", "asample2");
+
+  if (experimentclass.indexOf("classics")!=-1) {$(copy).css('background-color', '#5cb85c');}
+  if (experimentclass.indexOf("crystals")!=-1) {$(copy).css('background-color', '#428bca');}
+  if (experimentclass.indexOf("fire")!=-1) {$(copy).css('background-color', '#d9534f');}
+  if (experimentclass.indexOf("house")!=-1) {$(copy).css('background-color', '#f0ad4e');}
+  if (experimentclass.indexOf("metaloelectro")!=-1) {$(copy).css('background-color', 'rgb(127, 127, 127)');}
+
+  $("#container").append(copy); 
+}
+
+function gss(json, row, name) {
+  return json.feed.entry[row]["gsx$" + name]["$t"]
+}
+
+function importGSS(json) {
+    console.log('EEE finished');
+  for (var i=0; i<json.feed.entry.length; i++) {
+    addExperiment(
+      gss(json, i, "title"),
+      gss(json, i, "chemicalequation"),
+      gss(json, i, "descriptivename"),
+      gss(json, i, "category"),
+      gss(json, i, "class"),
+      gss(json, i, "video"),
+      gss(json, i, "thumbnailvideo"),
+      gss(json, i, "safety3-safe0-dangerous"),
+      gss(json, i, "coolness3-cool0-boring"),
+      gss(json, i, "awarness3-unknown0-everyoneknows"),
+      gss(json, i, "totalscore")
+    );
+  }
+  console.log(json);
+}
+
+//$("#sample").hide();
+
+</script>
+
+<script src="https://spreadsheets.google.com/feeds/list/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/oddcyh0/public/values?alt=json-in-script&callback=importGSS"></script>
+
+
+</body>
+</html>
+
+<!-- https://spreadsheets.google.com/feeds/cells/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/od6/private/full -->
