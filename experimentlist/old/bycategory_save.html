@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>By Category</title>
+  <script src="jquery.js"></script>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <!-- Bootstrap core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/paper/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="//getbootstrap.com/examples/offcanvas/offcanvas.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body style="padding-left: 20px">
+<h1>By Category</h1>
+ 
+
+<p>
+<a href="#" id="accShow">View All</a>
+</p>
+
+<div id="container">
+
+<div class="panel-group" id="accordion" style="width: 600px">
+  <div class="panel panel-default" id="categorycontainer">
+    <div class="panel-heading">
+      <h4 class="panel-title">
+        <a data-toggle="collapse" data-parent="#accordion" href="#collapseOne" id="categoryname">
+          Collapsible Group Item #1
+        </a>
+      </h4>
+    </div>
+    <div id="collapseOne" class="panel-collapse collapse">
+      <div class="panel-body">
+        <li id="sample" style="overflow:hidden; height: 30px; text-overflow: ellipsis;">
+          <span id="title" style="overflow:hidden; height: 20px; text-overflow: ellipsis;" title="">Title</span> <span class="badge pull-right" id="totalscore"></span>
+        </li>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+
+<script type="text/javascript">
+var currentCategoryContainer = "";
+var categoryIndex = 0;
+
+$('#accShow').on('click', function() {
+    if($(this).text() == 'View All') {
+        $('.collapse:not(.in)').each(function (index) {
+            $(this).collapse("toggle");
+        });
+        $(this).text('Hide All');
+    } else {
+        $(this).text('View All');
+        $('.collapse.in').each(function (index) {
+            $(this).collapse("toggle");
+        });
+    }
+    return false;
+});
+
+function ellipseString(s, n) {
+  if (s.length>n) {
+    return s.substring(0, n-3) + "...";
+  } else {
+    return s;
+  }
+}
+
+function addCategory(name, count) {
+    categoryIndex = categoryIndex + 1;
+    var cattegoryElement = $("#categorycontainer").clone();
+    var a = cattegoryElement.find("#categoryname");
+    a.html(name + "[" + count + "]");
+    a.attr("href", "#collapse" + categoryIndex);
+
+    var hiddenDiv = cattegoryElement.find("#collapseOne");
+    hiddenDiv.attr("id", "collapse" + categoryIndex);
+
+    currentCategoryContainer = cattegoryElement.find(".panel-body");
+    $(cattegoryElement).find("#sample").remove();
+    $("#accordion").append(cattegoryElement); 
+}
+
+function addExperiment(title, chemicalequation, descriptivename, category, experimentclass, video, safety, coolness, awarness, totalscore) {
+  var copy = $("#sample").clone();
+  copy.find("#title").html(ellipseString(title, 90));
+  copy.find("#descriptivename").html(descriptivename);
+  var pos = video.indexOf("?v=");
+  if (pos!=-1) {
+    console.log(video);
+    var youtubeId = video.substring(pos+3);
+    console.log(youtubeId);    
+    copy.find("#thumbnail").attr("src","http://img.youtube.com/vi/" + youtubeId + "/0.jpg");
+  };
+  copy.attr("title", "[" + chemicalequation + "] " + descriptivename);
+  copy.find("#totalscore").html(totalscore);
+  copy.find("#chemicalequation").html(chemicalequation);
+  copy.find("#category").html("[" + category + "]");
+  copy.find("#experimentclass").html(experimentclass);
+  $(copy).attr("id", "sample2");
+  $(currentCategoryContainer).append(copy); 
+}
+
+function gss(json, row, name) {
+  return json.feed.entry[row]["gsx$" + name]["$t"]
+}
+
+function scoreComparator(a, b) {
+  return b["gsx$totalscore"]["$t"] - a["gsx$totalscore"]["$t"];
+}
+
+function importGSS(json) {
+  console.log('EEE finished');
+  var categories = {};
+  for (var i=0; i<json.feed.entry.length; i++) {
+    var experimentcategories = gss(json, i, "category").split(",");
+    for (var j=0; j<experimentcategories.length; j++) {
+      var c = experimentcategories[j].trim();
+      if (c != "") {
+        if (categories.hasOwnProperty(c)) {
+          categories[c] = categories[c] + 1;
+        } else {
+          categories[c] = 1;
+        }
+      } 
+    }
+  }
+
+  json.feed.entry.sort(scoreComparator);
+
+  var sortedCategories = [];
+  for (var c in categories) {
+    if (categories.hasOwnProperty(c)) {
+      sortedCategories.push(c);
+    }
+  }
+  sortedCategories.sort();
+
+  for (var j=0; j<sortedCategories.length; j++) {
+      var c = sortedCategories[j];
+      addCategory(c, categories[c]);
+      for (var i=0; i<json.feed.entry.length; i++) {
+        if (gss(json, i, "category").indexOf(c)!=-1) {
+          addExperiment(
+            gss(json, i, "title"),
+            gss(json, i, "chemicalequation"),
+            gss(json, i, "descriptivename"),
+            gss(json, i, "category"),
+            gss(json, i, "class"),
+            gss(json, i, "video"),
+            gss(json, i, "safety3-safe0-dangerous"),
+            gss(json, i, "coolness3-cool0-boring"),
+            gss(json, i, "awarness3-unknown0-everyoneknows"),
+            gss(json, i, "totalscore")
+          );
+        }
+      }
+  }
+
+  $("#categorycontainer").remove();
+  console.log(json);
+}
+
+</script>
+
+<script src="http://netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+
+<script src="https://spreadsheets.google.com/feeds/list/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/oddcyh0/public/values?alt=json-in-script&callback=importGSS"></script>
+
+
+</body>
+</html>
+
+<!-- https://spreadsheets.google.com/feeds/cells/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/od6/private/full -->
