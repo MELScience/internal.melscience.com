@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>MEL Chemistry Process</title>
+  <script src="jquery.js"></script>
+  <script src="jquery.cookie.js"></script>
+</head>
+<body style="padding-left: 20px; padding-top: 20px; margin-top: 0px;">
+
+<style>
+table.tasktable {border-top:1px solid grey;border-left:1px solid grey;}
+table.tasktable td {border-right:1px solid grey;border-bottom:1px solid grey; padding: 2px 5px 2px 5px; }
+table.tasktable th {border-right:1px solid grey;border-bottom:1px solid grey; padding: 2px 5px 2px 5px; font-weight: bold;}
+</style>
+
+Set: <select id="selection_set" style="margin-right: 30px;">
+</select>
+
+Responsible: <select id="selection_responsible">
+</select>
+
+<div id="first_task_container">
+<h3>Next task:<h3>
+<h2>#<span id="first_task_id"></span> <span id="first_task_name"></span> <span id="first_task_experiment"></span></h2>
+
+<p>Set: <span id="first_task_set"></span></p>
+
+<p id="first_task_responsible"></p>
+</div>
+
+<hr>
+
+<h2>Tasks to do</h2>
+
+<table id="task_container" cellpadding="0" cellspacing="0" class="tasktable">
+  <tr>
+    <th>id</th>
+    <th>set</th>
+    <th>experiment</th>
+    <th>name</th>
+    <th>responsible</th>
+  </tr>
+  <tr id="sampletask" class="task_row">
+    <td id="task_id"></td>
+    <td id="task_set"></td>
+    <td id="task_experiment"></td>
+    <td id="task_name"></td>
+    <td id="task_responsible"></td>
+  </tr>
+</table>
+
+<h2>Blocker tasks</h2>
+
+<table id="blocktasker_container" cellpadding="0" cellspacing="0" class="tasktable">
+  <tr>
+    <th>id</th>
+    <th>set</th>
+    <th>experiment</th>
+    <th>name</th>
+    <th>responsible</th>
+    <th>blocking</th>
+  </tr>
+  <tr id="sampleblockertask" class="task_row">
+    <td id="blocker_task_id"></td>
+    <td id="blocker_task_set"></td>
+    <td id="blocker_task_experiment"></td>
+    <td id="blocker_task_name"></td>
+    <td id="blocker_task_responsible"></td>
+    <td id="blocker_task_blocking"></td>
+  </tr>
+</table>
+
+<script>
+
+var processitems = [];
+var filterResponsible = "Kostya";
+var filterSet = "Kostya";
+
+function parseJson(json) {
+  console.log(json);
+  var processitems = [];
+  for (var i=0; i<json.feed.entry.length; i++) {
+    processitems[i] = [];
+    processitems[i]["set"] = json.feed.entry[i]["gsx$set"]["$t"];
+    processitems[i]["id"] = json.feed.entry[i]["gsx$id"]["$t"];
+    processitems[i]["dependency"] = json.feed.entry[i]["gsx$dependency"]["$t"].split(", ");
+    processitems[i]["experiment"] = json.feed.entry[i]["gsx$experiment"]["$t"];
+    processitems[i]["name"] = json.feed.entry[i]["gsx$name"]["$t"];
+    processitems[i]["responsible"] = json.feed.entry[i]["gsx$responsible"]["$t"];
+    processitems[i]["status"] = json.feed.entry[i]["gsx$status"]["$t"];
+  }
+  return processitems;
+}
+
+function getProcessItemById(id, set) {
+  for (var i=0; i<processitems.length; i++) {
+    var item = processitems[i];
+    if (item["id"]==id && item["set"]==set) {
+      return item;
+    }
+  }
+  console.log("Exception: dependency item not found, id=" + id + ", set=" + set);
+  return null;
+}
+
+function isProcessItemReadyToStart(item) {
+  var allDepReady = true;
+  for (var i=0; i<item["dependency"].length; i++) {
+    var dep = item["dependency"][i];
+    if (dep!=null) {
+      if (dep["status"]!="done") {
+        allDepReady = false;
+      }
+    }
+  }
+  return allDepReady;
+}
+
+function addProcessItem(item, id) {
+  var copy = $("#sampletask").clone();
+  copy.show();
+  copy.find("#task_id").html(item["id"]);
+  copy.find("#task_set").html(item["set"]);
+  copy.find("#task_name").html(item["name"]);
+  copy.find("#task_responsible").html(item["responsible"]);
+  copy.find("#task_experiment").html(item["experiment"]);
+  $(copy).attr("id", "processitem_" + id);
+  $("#task_container").append(copy); 
+}
+
+function addBlockerProcessItem(item, id, blocking) {
+  var copy = $("#sampleblockertask").clone();
+  copy.show();
+  copy.find("#blocker_task_id").html(item["id"]);
+  copy.find("#blocker_task_set").html(item["set"]);
+  copy.find("#blocker_task_name").html(item["name"]);
+  copy.find("#blocker_task_responsible").html(item["responsible"]);
+  copy.find("#blocker_task_experiment").html(item["experiment"]);
+  copy.find("#blocker_task_blocking").html(blocking);
+  $(copy).attr("id", "blocker_processitem_" + id);
+  $("#blocktasker_container").append(copy); 
+}
+
+function addFirstProcessItem(item, id) {
+  $("#first_task_container").show();
+  $("#first_task_id").html(item["id"]);
+  $("#first_task_set").html(item["set"]);
+  $("#first_task_name").html(item["name"]);
+  $("#first_task_responsible").html(item["responsible"]);
+  if (item["experiment"]!="") {
+    $("#first_task_experiment").html("["+item["experiment"]+"]");
+  } else {
+    $("#first_task_experiment").html("");
+  }
+}
+
+function hideSample() {
+  $("#sampletask").hide();
+  $("#sampleblockertask").hide();
+}
+
+function isFilterMatched(item) {
+  return item["status"]!="done" && 
+         (filterResponsible==null || item["responsible"]==filterResponsible) &&
+         (filterSet==null || item["set"]==filterSet);
+}
+
+function getItemShortString(item) {
+  if (item["experiment"]!="") {
+    return "#" + item["id"] + " " + item["name"] + " [" + item["experiment"] + "]" + " - " + item["responsible"];
+  } else {
+    return "#" + item["id"] + " " + item["name"] + " - " + item["responsible"];
+  }
+}
+
+function getBlockedItemsByThis(item) {
+  for (var i=0; i<processitems.length; i++) {
+    var item2 = processitems[i];
+    if (isFilterMatched(item2)) {
+      if (item2["dependency"].indexOf(item)!=-1) {
+        return getItemShortString(item2);
+      }
+    }
+  }
+  return "notfound";
+}
+
+function buildProcessItemsList(processitems) {
+  $("#first_task_container").hide();
+  var firstFlag = true;
+  var blockerItems = [];
+  for (var i=0; i<processitems.length; i++) {
+    var item = processitems[i];
+    if (isFilterMatched(item)) {
+      if (isProcessItemReadyToStart(item)) {
+        addProcessItem(item, i);
+        if (firstFlag) {
+          addFirstProcessItem(item, i);
+          firstFlag = false;
+        }
+      } else {
+        for (var j=0; j<item["dependency"].length; j++) {
+          if (blockerItems.indexOf(item["dependency"][j])==-1) {
+            blockerItems.push(item["dependency"][j]);
+          }
+        }
+      }
+    }
+  }
+  for (var i=0; i<blockerItems.length; i++) {
+    var item = blockerItems[i];
+    addBlockerProcessItem(item, i, getBlockedItemsByThis(item));
+  }
+  hideSample();
+}
+
+function addToSet(arr, s) {
+  arr[s] = 1;
+}
+
+function addSetToSelect(set, selectId) {
+  var select = document.getElementById(selectId);
+  for (var s in set) {
+    if (set.hasOwnProperty(s)) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.innerHTML = s;
+      select.appendChild(opt);
+    }
+  }
+}
+
+function fillSelections(processitems) {
+  var sets = {};
+  var responsibles = {};
+  for (var i=0; i<processitems.length; i++) {
+    addToSet(sets, processitems[i]["set"]);
+    addToSet(responsibles, processitems[i]["responsible"]);
+  }
+  addSetToSelect(sets, "selection_set");
+  addSetToSelect(responsibles, "selection_responsible");
+}
+
+function updatePageContent() {
+  $("#task_container").find(".task_row").not("#sampletask").remove();
+  $("#blocktasker_container").find(".task_row").not("#sampleblockertask").remove();
+  buildProcessItemsList(processitems);
+}
+
+$("#selection_set").on("change", function() {
+  filterSet = ""+this.value;
+  alert(filterSet);
+  $.cookie("filter_set", filterSet);
+  updatePageContent();
+});
+
+$("#selection_responsible").on("change", function() {
+  filterResponsible = ""+this.value;
+  $.cookie("filter_responsible", filterResponsible);
+  updatePageContent();
+});
+
+function replaceIdsToItems(processitems) {
+  for (var i=0; i<processitems.length; i++) {
+    var item = processitems[i];
+    for (var j=0; j<item["dependency"].length; j++) {
+      var id = item["dependency"][j];
+      var item2 = getProcessItemById(id, item["set"]);
+      if (item2!=null) {
+        item["dependency"][j] = item2;
+      }
+    }
+  }
+}
+
+function importGSS(json) {
+  alert($.cookie("filter_set"));
+  alert($.cookie("filter_responsible"));
+  processitems = parseJson(json);
+  replaceIdsToItems(processitems);
+  fillSelections(processitems);
+  buildProcessItemsList(processitems);
+}
+</script>
+
+
+<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/o7f9vto/public/values?alt=json-in-script&callback=importGSS"></script>
+
+</body>
+</html>
