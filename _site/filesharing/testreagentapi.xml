@@ -1,0 +1,39 @@
+﻿
+<reagent_label>
+    <reagent_id></reagent_id>
+    <name>Hexamethylene-tetramine</name>
+    <mel_code></mel_code>
+    <inner_title></inner_title>
+    <color>yellow</color>
+    <common_name>solid fuel</common_name>
+    <formula>C₆H₁₂N₄</formula>
+    <form></form>
+    <cas_number>100-97-0</cas_number>
+    <ghs_signal_word>warning</ghs_signal_word>
+    <ghs_pictograms>
+        
+            
+        
+            
+                <ghs_pictogram>2</ghs_pictogram>
+            
+        
+            
+        
+            
+        
+            
+        
+            
+        
+            
+                <ghs_pictogram>7</ghs_pictogram>
+            
+        
+            
+        
+            
+        
+    </ghs_pictograms>
+    <amount>2.5g</amount>
+</reagent_label>

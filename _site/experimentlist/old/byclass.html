@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>By Class</title>
+  <script src="jquery.js"></script>
+    <link rel="icon" href="/favicon.ico">
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+
+    <!-- Bootstrap core CSS -->
+    <link href="//maxcdn.bootstrapcdn.com/bootswatch/3.2.0/paper/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="//getbootstrap.com/examples/offcanvas/offcanvas.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body style="padding-left: 20px">
+<h1>By Class</h1>
+ 
+<div id="container">
+  <div id="sampleclasscontainer">
+  <h2 id="experimentclass">Classname</h2>
+  <li id="sample">
+    <span id="totalscore"></span> <span id="title" title="">Title</span>
+  </li>
+</div>
+ 
+<script type="text/javascript">
+var prevClass = "";
+var currentClassContainer = "";
+
+function addExperiment(title, chemicalequation, descriptivename, category, experimentclass, video, safety, coolness, awarness, totalscore) {
+  if (prevClass != experimentclass) {
+    currentClassContainer = $("#sampleclasscontainer").clone();
+    currentClassContainer.find("#experimentclass").html(experimentclass);
+    $(currentClassContainer).find("#sample").remove();
+    $("#container").append(currentClassContainer); 
+    prevClass = experimentclass;
+  }
+
+  var copy = $("#sample").clone();
+  copy.find("#title").html(title);
+  copy.find("#descriptivename").html(descriptivename);
+  var pos = video.indexOf("?v=");
+  if (pos!=-1) {
+    console.log(video);
+    var youtubeId = video.substring(pos+3);
+    console.log(youtubeId);    
+    copy.find("#thumbnail").attr("src","http://img.youtube.com/vi/" + youtubeId + "/0.jpg");
+  };
+  copy.attr("title", "[" + chemicalequation + "] " + descriptivename);
+  copy.find("#totalscore").html(totalscore);
+  copy.find("#chemicalequation").html(chemicalequation);
+  copy.find("#category").html("[" + category + "]");
+  copy.find("#experimentclass").html(experimentclass);
+  $(copy).attr("id", "sample2");
+  $(currentClassContainer).append(copy); 
+}
+
+function gss(json, row, name) {
+  return json.feed.entry[row]["gsx$" + name]["$t"]
+}
+
+function classScoreComparator(a, b) {
+  if (a["gsx$class"]["$t"] > b["gsx$class"]["$t"]) {
+    return 1;  
+  }
+  if (a["gsx$class"]["$t"] == b["gsx$class"]["$t"]) {
+    return b["gsx$totalscore"]["$t"] - a["gsx$totalscore"]["$t"];
+  }
+  return -1;  
+}
+function importGSS(json) {
+  console.log('EEE finished');
+  json.feed.entry.sort(classScoreComparator);
+  for (var i=0; i<json.feed.entry.length; i++) {
+    addExperiment(
+      gss(json, i, "title"),
+      gss(json, i, "chemicalequation"),
+      gss(json, i, "descriptivename"),
+      gss(json, i, "category"),
+      gss(json, i, "class"),
+      gss(json, i, "video"),
+      gss(json, i, "safety3-safe0-dangerous"),
+      gss(json, i, "coolness3-cool0-boring"),
+      gss(json, i, "awarness3-unknown0-everyoneknows"),
+      gss(json, i, "totalscore")
+    );
+  }
+  $("#sampleclasscontainer").remove();
+  console.log(json);
+}
+
+</script>
+
+<script src="https://spreadsheets.google.com/feeds/list/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/oddcyh0/public/values?alt=json-in-script&callback=importGSS"></script>
+
+</body>
+</html>
+
+<!-- https://spreadsheets.google.com/feeds/cells/1-fKkwmwvF4pezy-jftdP2F-G6RTg7K9nod3qfJ_3H7M/od6/private/full -->
