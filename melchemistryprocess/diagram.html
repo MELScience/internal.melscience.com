@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>MEL Chemistry Process Diagram</title>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/bootstrap.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body style="padding-left: 30px; padding-top: 10px; padding-right: 30px;">
+
+<div class="container-fluid">
+
+<h1>MEL Chemistry process diagram</h1>
+<div style="margin-bottom: 30px">
+Set: <select id="selection_set" style="color: black; margin-right: 30px; margin-bottom: 0px; margin-top: 15px;"></select>
+Responsible: <select id="selection_responsible" style="color: black; margin-bottom: 0px; margin-top: 15px;"></select>
+</div>
+
+<canvas id="diagram_canvas" width="1042" height="1142"></canvas>
+<img id="diagram_image" src="images/processdiagram.png" width="1" height="1" alt="">
+
+<script>
+
+var tasks = [];
+var filterResponsible = "Kostya";
+var filterSet = "Kostya";
+var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
+var firstTodoTask = null;
+
+var taskCoordinates = {
+  10: [500,   0, 640,  30],
+  20: [500,  50, 640,  80],
+  40: [650,  50, 790,  80],
+  50: [510, 100, 630, 130],
+  60: [210, 160, 330, 210],
+  80: [780, 160, 900, 200],
+  90: [920, 160,1040, 200],
+ 100: [850, 220, 970, 270],
+ 110: [850, 290, 970, 340],
+ 120: [ 30, 240, 150, 280],
+ 130: [ 30, 300, 150, 350],
+ 140: [170, 240, 290, 280],
+ 150: [310, 240, 430, 280],
+ 160: [540, 305, 660, 345],
+ 170: [250, 310, 380, 350],
+ 180: [550, 420, 700, 460],
+ 200: [220, 370, 340, 410],
+ 205: [ 50, 370, 200, 410],
+ 210: [ 30, 500, 150, 540],
+ 220: [920, 360,1040, 400],
+ 230: [ 50, 430, 170, 470],
+ 240: [210, 500, 365, 540],
+ 250: [710, 550, 830, 590],
+ 260: [780, 690, 900, 730],
+ 270: [490, 490, 610, 530],
+ 280: [ 30, 570, 160, 620],
+ 290: [ 30, 640, 160, 690],
+ 300: [ 30, 710, 160, 750],
+ 310: [480, 660, 600, 710],
+ 320: [910, 625,1030, 665],
+ 330: [770, 840, 890, 880],
+ 340: [800, 895, 920, 935],
+ 370: [730, 945, 850, 985],
+ 380: [910, 970,1030,1010],
+ 390: [810,1030, 910,1070],
+ 400: [930,1030,1030,1070],
+ 410: [ 30, 790, 150, 830],
+ 420: [ 30, 850, 160, 890],
+ 430: [ 40, 915, 180, 965],
+ 440: [330, 710, 450, 750],
+ 450: [320, 850, 440, 890],
+ 460: [320, 920, 440, 970],
+ 470: [550, 595, 670, 635],
+ 480: [650, 690, 770, 730],
+ 490: [185, 790, 285, 830],
+ 500: [200, 920, 300, 960],
+ 510: [200, 640, 320, 680],
+ 520: [200, 710, 320, 750],
+ 560: [210,1060, 340,1100],
+ 570: [560,1100, 680,1140] 
+};
+
+function parseJson(json) {
+  var tasks = [];
+  for (var i=0; i<json.feed.entry.length; i++) {
+    tasks[i] = {};
+    for (var p=0; p<taskFields.length; p++) {
+      var field = taskFields[p];
+      tasks[i][field] = json.feed.entry[i]["gsx$"+field]["$t"];
+    }
+  }
+  return tasks;
+}
+                       
+function getTaskById(id, set, experiment) {
+  var arr = [];
+  for (var i=0; i<tasks.length; i++) {
+    var task = tasks[i];
+    if (task["id"]==id && 
+        task["set"]==set && 
+        (experiment=="" || task["experiment"]=="" || task["experiment"]==experiment)
+    ) {
+      arr.push(task);
+    }
+  }
+  return arr;
+}
+
+function isTaskReadyToStart(task) {
+  var allDepReady = true;
+  for (var i=0; i<task["dependency"].length; i++) {
+    var dep = task["dependency"][i];
+    if (dep!=null) {
+      if (dep["status"]!="done") {
+        allDepReady = false;
+      }
+    }
+  }
+  return allDepReady;
+}
+
+function getTasksReleasedAfterThatIsDone(task) {
+  var arr = [];
+
+  for (var i=0; i<tasks.length; i++) {
+    var t = tasks[i];
+    if (t["status"]!="done") {
+      var dependsOnThatTask = false;
+      var dependsOnOtherNotDone = false;
+
+      for (var j=0; j<t["dependency"].length; j++) {
+        var dep = t["dependency"][j];
+        if (dep==task) {
+          dependsOnThatTask = true;
+        } else {
+          if (dep["status"]!="done") {
+            dependsOnOtherNotDone = true;
+          }
+        }
+      }
+
+      if (dependsOnThatTask && !dependsOnOtherNotDone) {
+        arr.push(t);
+      }
+    }
+  }
+
+  return arr;
+}
+
+function populateTaskData(container, task) {
+  for (var field in task) {
+    if (task.hasOwnProperty(field)) {
+      $(container).find(".field_"+field).html(task[field]);
+    }
+  }
+}
+
+function getDescriptionOfTasksBlockingThis(task) {
+  var blockedStr = "";
+  for (var j=0; j<task["dependency"].length; j++) {
+    var dep = task["dependency"][j];
+    if (dep["status"] != "done") {
+      blockedStr = blockedStr + dep["shortstring"] + "<br>";
+    }
+  }
+  return blockedStr;
+}
+
+function getExperimentList() {
+  var experiments = {}
+  for (var i=0; i<tasks.length; i++) {
+    var task = tasks[i];
+    if (task["set"]==filterSet && task["experiment"]!="") {
+      experiments[task["experiment"]] = 1;
+    }
+  }
+  var experimentList = [];
+  for (experiment in experiments) {
+    if (experiments.hasOwnProperty(experiment)) {
+      experimentList.push(experiment);
+    }
+  }
+  return experimentList;
+}
+
+function drawAllTasks() {
+  var experiments = getExperimentList();
+  console.log(experiments);
+  var canvas = document.getElementById("diagram_canvas");
+  var ctx = canvas.getContext("2d");
+
+  //Draw background diagram 
+  var img=document.getElementById("diagram_image");
+  ctx.fillStyle = "white";
+  ctx.globalAlpha = 1;
+  ctx.fillRect(0, 0, 1300, 1300);
+  ctx.drawImage(img, 0, 0);
+
+  //Draw task rects
+  for (var i=0; i<tasks.length; i++) {
+    var task = tasks[i];
+    if (task["set"]==filterSet) {
+      if (task["experiment"]=="") {
+        task["experiment_index"] = -1;
+      } else {
+        task["experiment_index"] = experiments.indexOf(task["experiment"]);
+      }
+      drawTask(ctx, task, experiments.length);
+    }
+  }
+}
+
+function addToSet(arr, s) {
+  arr[s] = 1;
+}
+
+function addSetToSelect(set, selectId, selectedElement) {
+  var select = document.getElementById(selectId);
+
+  //Adding other options
+  for (var s in set) {
+    if (set.hasOwnProperty(s)) {
+      var opt = document.createElement("option");
+      opt.value = s;
+      opt.innerHTML = s;
+      if (s==selectedElement) {
+        opt.selected = true;
+      }
+      select.appendChild(opt);
+    }
+  }
+}
+
+function fillSelections(tasks) {
+  var sets = {};
+  var responsibles = {};
+  for (var i=0; i<tasks.length; i++) {
+    addToSet(sets, tasks[i]["set"]);
+    addToSet(responsibles, tasks[i]["responsible"]);
+  }
+  addSetToSelect(sets, "selection_set", filterSet);
+  addSetToSelect(responsibles, "selection_responsible", filterResponsible);
+}
+
+function updatePageContent() {
+  drawAllTasks();
+}
+
+$("#selection_set").on("change", function() {
+  if (""+this.value=="All") {
+    filterSet = "";
+  } else {
+    filterSet = ""+this.value;
+  }
+  $.cookie("filter_set", filterSet);
+  updatePageContent();
+});
+
+$("#selection_responsible").on("change", function() {
+  if (""+this.value=="All") {
+    filterResponsible = "";
+  } else {
+    filterResponsible = ""+this.value;
+  }
+  $.cookie("filter_responsible", filterResponsible);
+  updatePageContent();
+});
+
+function getTaskShortString(task) {
+  if (task["experiment"]!="") {
+    return "#" + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]" + " - " + task["responsible"];
+  } else {
+    return "#" + task["id"] + " " + task["name"] + " - " + task["responsible"];
+  }
+}
+
+function processTasks(tasks) {
+  for (var i=0; i<tasks.length; i++) {
+    var task = tasks[i];
+    processTaskDependency(task);
+    task["index"] = i+2;
+    task["shortstring"] = getTaskShortString(task);
+    task["results"] = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+}
+
+function processTaskDependency(task) {
+  var arrDepTasks = [];
+  var arrDepIds = task["dependency"].split(", ");
+  for (var j=0; j<arrDepIds.length; j++) {
+    var id = arrDepIds[j];
+    $.merge(arrDepTasks, getTaskById(id, task["set"], task["experiment"]));
+  }
+  task["dependency"] = arrDepTasks;
+}
+
+function importGSS(json) {
+  filterResponsible = $.cookie("filter_responsible");
+  filterSet = $.cookie("filter_set");
+
+  tasks = parseJson(json);
+  processTasks(tasks);
+
+  fillSelections(tasks);
+  drawAllTasks();
+}
+
+function drawTask(ctx, task, numberOfExperiments) {
+  var coordinates = taskCoordinates[task["id"]];
+  if (coordinates!=null) {
+
+    var x = coordinates[0];
+    var y = coordinates[1];
+    var width = coordinates[2]-x;
+    var height = coordinates[3]-y;
+    //Update coordinates for experiment tasks (only a fraction of rectangle is filled)
+    if (task["experiment_index"]!=-1) {
+      width = (coordinates[2]-coordinates[0])/numberOfExperiments;
+      x = coordinates[0]+width*task["experiment_index"];
+      width = width-1;
+    }
+
+    ctx.globalAlpha = 0.5;
+    if (task["status"]=="done") {
+      ctx.fillStyle = "blue";
+      ctx.fillRect(x, y, width, height);
+    } else {
+      if (task["responsible"]==filterResponsible) {
+        if (isTaskReadyToStart(task)) {
+          ctx.fillStyle = "red";
+          ctx.fillRect(x, y, width, height);
+        } else {
+          ctx.fillStyle = "green";
+          ctx.fillRect(x, y, width, height);
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  } else {
+    console.log("Error. Coordinates for task #" + task["id"] + " not found");
+  }  
+}
+
+window.onload = function() {
+  var c = document.getElementById("diagram_canvas");
+  var ctx = c.getContext("2d");
+  drawAllTasks();
+};
+</script>
+
+
+<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/o7f9vto/public/values?alt=json-in-script&callback=importGSS"></script>
+
+</div> <!-- /container -->
+
+</body>
+</html>
