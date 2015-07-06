@@ -177,6 +177,22 @@ var filterResponsible = "Kostya";
 var filterSet = "Kostya";
 var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
 var firstTodoTask = null;
+var people = [
+ {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Vasja"},
+ {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Sergey"},
+ {name: "Konstantin Gurianov", email: "konstantin@melscience.com", id: "Kostya"},
+ {name: "Denis Sapegin", email: "dasapegin@gmail.com", id: "Denis"},
+ {name: "Andrey Lyashin", email: "andrey.lyashin@scicon.ru", id: "Andrei"},
+ {name: "Kate Gotina", email: "gotinakatia92@gmail.com", id: "EN Translator"},
+ {name: "Kate Erofeeva", email: "ekaterina.aleks.erofeeva@gmail.com", id: "RU Editor"},
+ {name: "Galina Konstantinova", email: "galina@melscience.com", id: "Galya"},
+ {name: "Dmitry Groshev", email: "si14@melscience.com", id: "Dmitry"},
+ {name: "Vassili Philippov", email: "vassili@melscience.com", id: "US cert lab"},
+ {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Science writer"},
+ {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Video producer"},
+ {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Video translator"},
+ {name: "Artem Messorosh", email: "homess@melscience.com", id: "Artem"}
+];
 
 function parseJson(json) {
   var tasks = [];
@@ -246,6 +262,46 @@ function getTasksReleasedAfterThatIsDone(task) {
   return arr;
 }
 
+function sendEmail(person, task) {
+    $.ajax({
+      type: 'POST',
+      url: 'https://mandrillapp.com/api/1.0/messages/send.json',
+      data: {
+        'key': 'Tge2LRQL1Hk4rlhPes7qwQ',
+        'message': {
+          'from_email': 'robot@melscience.com',
+          'to': [
+              {
+                'email': person["email"],
+                'name': person["name"],
+                'type': 'to'
+              }
+            ],
+          'autotext': 'true',
+          'subject': 'Task is ready: ' + task["shortstring"],
+          'html': '<h1>#' + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]</h1>" +  
+                  "<br>Description: " + task["description"] + 
+                  "<br>Results: " + task["results"] + 
+                  "<br><br><a href='internal.melscience.com/melchemistryprocess/'>MEL Chemistry process page</a>" + 
+                  "<br><br><a href='https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918'>Google Sheet</a>"
+        }
+      }
+     }).done(function(response) {
+       console.log(response); // if you're into that sorta thing
+     });
+}
+
+function findPerson(personId) {
+  for (var i=0; i<people.length; i++) {
+    var person = people[i];
+    if (person["id"]==personId) {
+      return person;
+    }
+  }
+  console.log("Error. Person [" + personId + "] is not found");
+  return null;
+}
+
 function showFinishTasksDialog() {
   var releasedTasks = getTasksReleasedAfterThatIsDone(firstTodoTask);
 
@@ -274,6 +330,15 @@ function showFinishTasksDialog() {
     $("#finished_task").find(".field_pastestring").focus();
     $("#finished_task").find(".field_pastestring").select();
   });
+
+  //Send emails
+  for (var i=0; i<releasedTasks.length; i++) {
+    var releasedTask = releasedTasks[i];
+    var person = findPerson(releasedTask["responsible"]);
+    if (person!=null) {
+      sendEmail(person, releasedTask);
+    }
+  }
 
   $('#finish_task_dialog').modal();
 }
