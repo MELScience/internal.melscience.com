@@ -46,7 +46,7 @@
 <style>
 table.donetasktable td {color: #A0A0A0;}
 h2 {margin-top: 50px;}
-.sample_row {display:none;}
+.sample_task {display:none;}
 </style>
 
 <div class="container-fluid" style="padding-top: 30px;">
@@ -83,33 +83,12 @@ h2 {margin-top: 50px;}
     <th style="width:450px">name</th>
     <th style="width:120px">responsible</th>
   </tr>
-  <tr class="task_row sample_row">
+  <tr class="task_row sample_task">
     <td class="field_id"></td>
     <td class="field_set"></td>
     <td class="field_experiment"></td>
     <td class="field_name"></td>
     <td class="field_responsible"></td>
-  </tr>
-</table>
-
-<h2>Done</h2>
-
-<table id="done_tasks" cellpadding="0" cellspacing="0" class="donetasktable table table-bordered" style="width: 920px;">
-  <tr>
-    <th style="width:40px">id</th>
-    <th style="width:80px">set</th>
-    <th style="width:150px">experiment</th>
-    <th style="width:450px">name</th>
-    <th style="width:120px">responsible</th>
-    <th style="width:80px">time</th>
-  </tr>
-  <tr class="task_row sample_row">
-    <td class="field_id"></td>
-    <td class="field_set"></td>
-    <td class="field_experiment"></td>
-    <td class="field_name"></td>
-    <td class="field_responsible"></td>
-    <td class="field_totaltime"></td>
   </tr>
 </table>
 
@@ -124,7 +103,7 @@ h2 {margin-top: 50px;}
     <th style="width:120px">responsible</th>
     <th style="width:650px">blocked by</th>
   </tr>
-  <tr class="task_row sample_row">
+  <tr class="task_row sample_task">
     <td class="field_id"></td>
     <td class="field_set"></td>
     <td class="field_experiment"></td>
@@ -134,12 +113,70 @@ h2 {margin-top: 50px;}
   </tr>
 </table>
 
+<h2>Done</h2>
+
+<table id="done_tasks" cellpadding="0" cellspacing="0" class="donetasktable table table-bordered" style="width: 920px;">
+  <tr>
+    <th style="width:40px">id</th>
+    <th style="width:80px">set</th>
+    <th style="width:150px">experiment</th>
+    <th style="width:450px">name</th>
+    <th style="width:120px">responsible</th>
+    <th style="width:80px">time</th>
+  </tr>
+  <tr class="task_row sample_task">
+    <td class="field_id"></td>
+    <td class="field_set"></td>
+    <td class="field_experiment"></td>
+    <td class="field_name"></td>
+    <td class="field_responsible"></td>
+    <td class="field_totaltime"></td>
+  </tr>
+</table>
+
+<!-- Modal -->
+<div class="modal fade" id="finish_task_dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Task finished</h4>
+      </div>
+      <div class="modal-body">
+        <h4>Task finished</h4>
+        <div id="finished_task">
+          <span class="field_shortstring"></span>
+
+          <h4 style="margin-top: 30px;">Needed actions</h4>
+          <ol>
+            <li>Make sure files are put in right places if needed<br><span style="color: blue;">Result: <span class="field_results"></span></span></li>
+            <li>Copy the following text <input type="text" size="20" class="field_pastestring"></input> and paste it to <a href="https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918" target="_blank">Google Sheet</a> to row <span class="field_index"></span></li>
+            <li>Owners of released tasks will be notified by email</li>
+            <li>Refresh the page and start the next task</li>
+          </ol>
+
+        </div>
+
+        <h4 style="margin-top: 30px;">The following tasks are now released and ready to do</h4>
+        <div id="released_tasks">
+          <ul class="sample_task">
+            <li class="field_shortstring"></li>
+          </ul>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 <script>
 
 var tasks = [];
 var filterResponsible = "Kostya";
 var filterSet = "Kostya";
 var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
+var firstTodoTask = null;
 
 function parseJson(json) {
   var tasks = [];
@@ -180,6 +217,67 @@ function isTaskReadyToStart(task) {
   return allDepReady;
 }
 
+function getTasksReleasedAfterThatIsDone(task) {
+  var arr = [];
+
+  for (var i=0; i<tasks.length; i++) {
+    var t = tasks[i];
+    if (t["status"]!="done") {
+      var dependsOnThatTask = false;
+      var dependsOnOtherNotDone = false;
+
+      for (var j=0; j<t["dependency"].length; j++) {
+        var dep = t["dependency"][j];
+        if (dep==task) {
+          dependsOnThatTask = true;
+        } else {
+          if (dep["status"]!="done") {
+            dependsOnOtherNotDone = true;
+          }
+        }
+      }
+
+      if (dependsOnThatTask && !dependsOnOtherNotDone) {
+        arr.push(t);
+      }
+    }
+  }
+
+  return arr;
+}
+
+function showFinishTasksDialog() {
+  var releasedTasks = getTasksReleasedAfterThatIsDone(firstTodoTask);
+
+  populateTaskData($("#finished_task"), firstTodoTask);
+
+  //Prepare string to paste
+  var currentdate = new Date(); 
+  var startTimeStr = $("#time_start").html();
+  var finishTimeStr = currentdate.getHours() + ":" + currentdate.getMinutes();
+  $("#time_finish").html(finishTimeStr);
+  $("#button_start").removeAttr("disabled");
+  $("#button_finish").attr('disabled','disabled');
+  $("#finished_task").find(".field_pastestring").val("done\t" + startTimeStr + "\t" + finishTimeStr);
+
+  //Released tasks
+  for (var i=0; i<releasedTasks.length; i++) {
+    var releasedTask = releasedTasks[i];
+    var copy = $("#released_tasks").find(".sample_task").clone();
+    $(copy).removeClass("sample_task");
+    copy.show();
+    populateTaskData(copy, releasedTask);
+    $("#released_tasks").append(copy); 
+  }
+
+  $('#finish_task_dialog').on('shown.bs.modal', function (e) {
+    $("#finished_task").find(".field_pastestring").focus();
+    $("#finished_task").find(".field_pastestring").select();
+  });
+
+  $('#finish_task_dialog').modal();
+}
+
 function populateTaskData(container, task) {
   for (var field in task) {
     if (task.hasOwnProperty(field)) {
@@ -189,8 +287,8 @@ function populateTaskData(container, task) {
 }
 
 function addTaskToTable(table, task, id) {
-  var copy = $(table).find(".sample_row").clone();
-  $(copy).removeClass("sample_row");
+  var copy = $(table).find(".sample_task").clone();
+  $(copy).removeClass("sample_task");
   copy.show();
   populateTaskData(copy, task);
   $(copy).attr("id", "task_" + id);
@@ -211,6 +309,7 @@ function addBlockedTask(task, id, blockedby) {
 }
 
 function addFirstTodoTask(task) {
+  firstTodoTask = task;
   $("#first_todo_task").show();
   populateTaskData($("#first_todo_task"), task);
 }
@@ -311,9 +410,9 @@ function fillSelections(tasks) {
 }
 
 function updatePageContent() {
-  $("#todo_tasks").find(".task_row").not(".sample_row").remove();
-  $("#done_tasks").find(".task_row").not(".sample_row").remove();
-  $("#blocked_tasks").find(".task_row").not(".sample_row").remove();
+  $("#todo_tasks").find(".task_row").not(".sample_task").remove();
+  $("#done_tasks").find(".task_row").not(".sample_task").remove();
+  $("#blocked_tasks").find(".task_row").not(".sample_task").remove();
   $("#first_blocked_task").hide();
   $("#first_todo_task").hide();
   buildTaskList(tasks);
@@ -350,13 +449,7 @@ $("#button_start").click(function(){
 });
 
 $("#button_finish").click(function(){
-  var currentdate = new Date(); 
-  var startTimeStr = $("#time_start").html();
-  var finishTimeStr = currentdate.getHours() + ":" + currentdate.getMinutes();
-  $("#time_finish").html(finishTimeStr);
-  $("#button_start").removeAttr("disabled");
-  $("#button_finish").attr('disabled','disabled');
-  window.prompt("Paste time to Google Sheet: Ctrl+C, Enter", "done\t" + startTimeStr + "\t" + finishTimeStr);
+  showFinishTasksDialog();
 });
 
 });
@@ -373,7 +466,9 @@ function processTasks(tasks) {
   for (var i=0; i<tasks.length; i++) {
     var task = tasks[i];
     processTaskDependency(task);
+    task["index"] = i+2;
     task["shortstring"] = getTaskShortString(task);
+    task["results"] = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 }
 
