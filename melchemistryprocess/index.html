@@ -75,13 +75,14 @@ h2 {margin-top: 50px;}
 
 <h2>To do</h2>
 
-<table id="todo_tasks" cellpadding="0" cellspacing="0" class="table table-bordered" style="width: 840px;">
+<table id="todo_tasks" cellpadding="0" cellspacing="0" class="table table-bordered" style="width: 940px;">
   <tr>
     <th style="width:40px">id</th>
     <th style="width:80px">set</th>
     <th style="width:150px">experiment</th>
     <th style="width:450px">name</th>
     <th style="width:120px">responsible</th>
+    <th style="width:100px"></th>
   </tr>
   <tr class="task_row sample_task">
     <td class="field_id"></td>
@@ -89,6 +90,7 @@ h2 {margin-top: 50px;}
     <td class="field_experiment"></td>
     <td class="field_name"></td>
     <td class="field_responsible"></td>
+    <td><button class="start_button" class="btn btn-primary">Start</button></td>
   </tr>
 </table>
 
@@ -278,7 +280,7 @@ function sendEmail(person, task) {
               }
             ],
           'autotext': 'true',
-          'subject': 'Task is ready: ' + task["shortstring"],
+          'subject': 'Next task: ' + task["shortstring"],
           'html': '<h1>#' + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]</h1>" +  
                   "<br>Description: " + task["description"] + 
                   "<br>Results: " + task["results"] + 
@@ -310,7 +312,7 @@ function showFinishTasksDialog() {
   //Prepare string to paste
   var currentdate = new Date(); 
   var startTimeStr = $("#time_start").html();
-  var finishTimeStr = currentdate.getHours() + ":" + currentdate.getMinutes();
+  var finishTimeStr = convertNumberToTwoDigitString(currentdate.getHours()) + ":" + convertNumberToTwoDigitString(currentdate.getMinutes());
   $("#time_finish").html(finishTimeStr);
   $("#button_start").removeAttr("disabled");
   $("#button_finish").attr('disabled','disabled');
@@ -356,6 +358,10 @@ function addTaskToTable(table, task, id) {
   $(copy).removeClass("sample_task");
   copy.show();
   populateTaskData(copy, task);
+  $(copy).find(".start_button").click(function(){
+    addFirstTodoTask(task);
+    startFirstTaskTimer();
+  });
   $(copy).attr("id", "task_" + id);
   $(table).append(copy); 
 }
@@ -503,14 +509,26 @@ $("#selection_responsible").on("change", function() {
   updatePageContent();
 });
 
-$(document).ready(function(){
+function convertNumberToTwoDigitString(n) {
+  if (n>9) {
+    return "" + n;
+  } else {
+    return "0" + n;
+  }
+}
 
-$("#button_start").click(function(){
+function startFirstTaskTimer() {
   var currentdate = new Date(); 
-  var startTimeStr = currentdate.getHours() + ":" + currentdate.getMinutes();
+  var startTimeStr = convertNumberToTwoDigitString(currentdate.getHours()) + ":" + convertNumberToTwoDigitString(currentdate.getMinutes());
   $("#time_start").html(startTimeStr);
   $("#button_start").attr('disabled','disabled');
   $("#button_finish").removeAttr("disabled");
+}
+
+$(document).ready(function(){
+
+$("#button_start").click(function(){
+  startFirstTaskTimer();
 });
 
 $("#button_finish").click(function(){
