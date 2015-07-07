@@ -54,11 +54,39 @@
 <canvas id="diagram_canvas" width="1042" height="1142"></canvas>
 <img id="diagram_image" src="images/processdiagram.png" width="1" height="1" alt="">
 
+<!-- Modal -->
+<div class="modal fade" id="task_dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Task</h4>
+      </div>
+      <div class="modal-body">
+        <h1>#<span class="field_id"></span> <span class="field_name"></span></h1>
+        <table class="table table-bordered">
+          <tr><td>Set</td><td class="field_set"></td></tr>
+          <tr><td>Experiment</td><td class="field_experiment"></td></tr>
+          <tr><td>Responsible</td><td class="field_responsible"></td></tr>
+          <tr><td>Status</td><td class="field_status"></td></tr>
+          <tr><td>Description</td><td class="field_description"></td></tr>
+          <tr><td>Results</td><td class="field_results"></td></tr>
+          <tr><td>Google Sheet Row</td><td class="field_index"></td></tr>
+        </table>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 var tasks = [];
 var filterResponsible = "Kostya";
 var filterSet = "Kostya";
+var experiments = [];
 var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
 var firstTodoTask = null;
 
@@ -141,6 +169,22 @@ function getTaskById(id, set, experiment) {
   return arr;
 }
 
+function getTaskByIdAndPercentage(id, set, percentage) {
+  var arr = [];
+  var experimentIndex = Math.floor(percentage * experiments.length);
+  var experiment = experiments[experimentIndex];
+  for (var i=0; i<tasks.length; i++) {
+    var task = tasks[i];
+    if (task["id"]==id && 
+        task["set"]==set && 
+        (task["experiment"]=="" || task["experiment"]==experiment)
+    ) {
+      return task;
+    }
+  }
+  return null;
+}
+
 function isTaskReadyToStart(task) {
   var allDepReady = true;
   for (var i=0; i<task["dependency"].length; i++) {
@@ -220,7 +264,6 @@ function getExperimentList() {
 }
 
 function drawAllTasks() {
-  var experiments = getExperimentList();
   console.log(experiments);
   var canvas = document.getElementById("diagram_canvas");
   var ctx = canvas.getContext("2d");
@@ -335,6 +378,7 @@ function importGSS(json) {
   filterSet = $.cookie("filter_set");
 
   tasks = parseJson(json);
+  experiments = getExperimentList();
   processTasks(tasks);
 
   fillSelections(tasks);
@@ -349,6 +393,7 @@ function drawTask(ctx, task, numberOfExperiments) {
     var y = coordinates[1];
     var width = coordinates[2]-x;
     var height = coordinates[3]-y;
+
     //Update coordinates for experiment tasks (only a fraction of rectangle is filled)
     if (task["experiment_index"]!=-1) {
       width = (coordinates[2]-coordinates[0])/numberOfExperiments;
@@ -376,6 +421,34 @@ function drawTask(ctx, task, numberOfExperiments) {
     console.log("Error. Coordinates for task #" + task["id"] + " not found");
   }  
 }
+
+function getTaskByCoordinate(x, y) {
+  for (id in taskCoordinates) {
+    if (taskCoordinates.hasOwnProperty(id)) {
+      var c = taskCoordinates[id];
+      if (x>=c[0] && x<=c[2] && y>=c[1] && y<=c[3]) {
+        return getTaskByIdAndPercentage(id, filterSet, (x-c[0])/(c[2]-c[0]));
+      }
+    }
+  }
+  return null;
+}
+
+$("#diagram_canvas").mousemove(function(event) {
+//    console.log("move: " + event.pageX + ", " + event.pageY);
+});
+
+$("#diagram_canvas").mousedown(function(event) {
+  var offset = $(this).offset();
+  x = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft - Math.floor(offset.left);  
+  y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop - Math.floor(offset.top) + 1;
+
+  var task = getTaskByCoordinate(x, y);
+  if (task!=null) {
+    populateTaskData($("#task_dialog"), task);
+    $("#task_dialog").modal();
+  }
+});
 
 window.onload = function() {
   var c = document.getElementById("diagram_canvas");
