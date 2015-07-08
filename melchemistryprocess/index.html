@@ -10,6 +10,7 @@
     <script src="js/jquery.js"></script>
     <script src="js/jquery.cookie.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/melprocess.js"></script>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -176,140 +177,13 @@ h2 {margin-top: 50px;}
 </div>
 <script>
 
-var tasks = [];
-var filterResponsible = "Kostya";
-var filterSet = "Kostya";
-var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
+var melTasks = {};
 var firstTodoTask = null;
-var people = [
- {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Vasja"},
- {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Sergey"},
- {name: "Konstantin Gurianov", email: "konstantin@melscience.com", id: "Kostya"},
- {name: "Denis Sapegin", email: "dasapegin@gmail.com", id: "Denis"},
- {name: "Andrey Lyashin", email: "andrey.lyashin@scicon.ru", id: "Andrei"},
- {name: "Kate Gotina", email: "gotinakatia92@gmail.com", id: "EN Translator"},
- {name: "Kate Erofeeva", email: "ekaterina.aleks.erofeeva@gmail.com", id: "RU Editor"},
- {name: "Galina Konstantinova", email: "galina@melscience.com", id: "Galya"},
- {name: "Dmitry Groshev", email: "si14@melscience.com", id: "Dmitry"},
- {name: "Vassili Philippov", email: "vassili@melscience.com", id: "US cert lab"},
- {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Science writer"},
- {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Video producer"},
- {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Video translator"},
- {name: "Artem Messorosh", email: "homess@melscience.com", id: "Artem"}
-];
-
-function parseJson(json) {
-  var tasks = [];
-  for (var i=0; i<json.feed.entry.length; i++) {
-    tasks[i] = {};
-    for (var p=0; p<taskFields.length; p++) {
-      var field = taskFields[p];
-      tasks[i][field] = json.feed.entry[i]["gsx$"+field]["$t"];
-    }
-  }
-  return tasks;
-}
-                       
-function getTaskById(id, set, experiment) {
-  var arr = [];
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    if (task["id"]==id && 
-        task["set"]==set && 
-        (experiment=="" || task["experiment"]=="" || task["experiment"]==experiment)
-    ) {
-      arr.push(task);
-    }
-  }
-  return arr;
-}
-
-function isTaskReadyToStart(task) {
-  var allDepReady = true;
-  for (var i=0; i<task["dependency"].length; i++) {
-    var dep = task["dependency"][i];
-    if (dep!=null) {
-      if (dep["status"]!="done") {
-        allDepReady = false;
-      }
-    }
-  }
-  return allDepReady;
-}
-
-function getTasksReleasedAfterThatIsDone(task) {
-  var arr = [];
-
-  for (var i=0; i<tasks.length; i++) {
-    var t = tasks[i];
-    if (t["status"]!="done") {
-      var dependsOnThatTask = false;
-      var dependsOnOtherNotDone = false;
-
-      for (var j=0; j<t["dependency"].length; j++) {
-        var dep = t["dependency"][j];
-        if (dep==task) {
-          dependsOnThatTask = true;
-        } else {
-          if (dep["status"]!="done") {
-            dependsOnOtherNotDone = true;
-          }
-        }
-      }
-
-      if (dependsOnThatTask && !dependsOnOtherNotDone) {
-        arr.push(t);
-      }
-    }
-  }
-
-  return arr;
-}
-
-function sendEmail(person, task) {
-    $.ajax({
-      type: 'POST',
-      url: 'https://mandrillapp.com/api/1.0/messages/send.json',
-      data: {
-        'key': 'Tge2LRQL1Hk4rlhPes7qwQ',
-        'message': {
-          'from_email': 'robot@melscience.com',
-          'to': [
-              {
-                'email': person["email"],
-                'name': person["name"],
-                'type': 'to'
-              }
-            ],
-          'autotext': 'true',
-          'subject': 'Next task: ' + task["shortstring"],
-          'html': '<h1>#' + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]</h1>" +  
-                  "<br>Description: " + task["description"] + 
-                  "<br>Results: " + task["results"] + 
-                  "<br><br><a href='internal.melscience.com/melchemistryprocess/'>MEL Chemistry process page</a>" + 
-                  "<br><br><a href='https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918'>Google Sheet</a>"
-        }
-      }
-     }).done(function(response) {
-       console.log(response); // if you're into that sorta thing
-     });
-}
-
-function findPerson(personId) {
-  for (var i=0; i<people.length; i++) {
-    var person = people[i];
-    if (person["id"]==personId) {
-      return person;
-    }
-  }
-  console.log("Error. Person [" + personId + "] is not found");
-  return null;
-}
 
 function showFinishTasksDialog() {
-  var releasedTasks = getTasksReleasedAfterThatIsDone(firstTodoTask);
+  var releasedTasks = firstTodoTask.getTasksReleasedAfterThatIsDone();
 
-  populateTaskData($("#finished_task"), firstTodoTask);
+  firstTodoTask.populateTaskData($("#finished_task"));
 
   //Prepare string to paste
   var currentdate = new Date(); 
@@ -326,7 +200,7 @@ function showFinishTasksDialog() {
     var copy = $("#released_tasks").find(".sample_task").clone();
     $(copy).removeClass("sample_task");
     copy.show();
-    populateTaskData(copy, releasedTask);
+    releasedTask.populateTaskData(copy);
     $("#released_tasks").append(copy); 
   }
 
@@ -338,75 +212,34 @@ function showFinishTasksDialog() {
   //Send emails
   for (var i=0; i<releasedTasks.length; i++) {
     var releasedTask = releasedTasks[i];
-    var person = findPerson(releasedTask["responsible"]);
-    if (person!=null) {
-      sendEmail(person, releasedTask);
-    }
+    melPeople.sendEmail(releasedTask.responsible, releasedTask);
   }
 
   $('#finish_task_dialog').modal();
 }
 
-function populateTaskData(container, task) {
-  for (var field in task) {
-    if (task.hasOwnProperty(field)) {
-      $(container).find(".field_"+field).html(task[field]);
-    }
-  }
-}
-
-function addTaskToTable(table, task, id) {
+function addTaskToTable(table, task) {
   var copy = $(table).find(".sample_task").clone();
   $(copy).removeClass("sample_task");
   copy.show();
-  populateTaskData(copy, task);
+  task.populateTaskData(copy);
   $(copy).find(".start_button").click(function(){
     addFirstTodoTask(task);
     startFirstTaskTimer();
   });
-  $(copy).attr("id", "task_" + id);
+  $(copy).attr("id", "task_" + task.index);
   $(table).append(copy); 
-}
-
-function addTodoTask(task, id) {
-  addTaskToTable($("#todo_tasks"), task, id);
-}
-
-function addDoneTask(task, id) {
-  addTaskToTable($("#done_tasks"), task, id);
-}
-
-function addBlockedTask(task, id, blockedby) {
-  task["blockedby"] = blockedby;
-  addTaskToTable($("#blocked_tasks"), task, id);
 }
 
 function addFirstTodoTask(task) {
   firstTodoTask = task;
   $("#first_todo_task").show();
-  populateTaskData($("#first_todo_task"), task);
+  task.populateTaskData($("#first_todo_task"));
 }
 
-function addFirstBlockedTask(task, descriptionOfBlockingTasks) {
+function addFirstBlockedTask(task) {
   $("#first_blocked_task").show();
-  task["blockedby"] = descriptionOfBlockingTasks;
-  populateTaskData($("#first_blocked_task"), task);
-}
-
-function isFilterMatched(task) {
-  return (filterResponsible=="" || task["responsible"]==filterResponsible) &&
-         (filterSet=="" || task["set"]==filterSet);
-}
-
-function getDescriptionOfTasksBlockingThis(task) {
-  var blockedStr = "";
-  for (var j=0; j<task["dependency"].length; j++) {
-    var dep = task["dependency"][j];
-    if (dep["status"] != "done") {
-      blockedStr = blockedStr + dep["shortstring"] + "<br>";
-    }
-  }
-  return blockedStr;
+  task.populateTaskData($("#first_blocked_task"));
 }
 
 function buildTaskList(tasks) {
@@ -416,18 +249,18 @@ function buildTaskList(tasks) {
   var blockerItems = [];
   for (var i=0; i<tasks.length; i++) {
     var task = tasks[i];
-    if (isFilterMatched(task)) {
-      if (task["status"]=="done") {
-        addDoneTask(task, i);
+    if (melFilter.isTaskMatched(task)) {
+      if (task.isDone()) {
+        addTaskToTable($("#done_tasks"), task);
       } else {
-        if (isTaskReadyToStart(task)) {
-          addTodoTask(task, i);
+        if (task.isReadyToStart()) {
+          addTaskToTable($("#todo_tasks"), task);
           if (firstFlag) {
-            addFirstTodoTask(task, i);
+            addFirstTodoTask(task);
             firstFlag = false;
           }
         } else {          
-          addBlockedTask(task, i, getDescriptionOfTasksBlockingThis(task));
+          addTaskToTable($("#blocked_tasks"), task);
           if (firstBlocked==null) {
             firstBlocked = task;
           }
@@ -437,49 +270,14 @@ function buildTaskList(tasks) {
   }
 
   if (firstFlag && firstBlocked!=null) {
-    addFirstBlockedTask(firstBlocked, getDescriptionOfTasksBlockingThis(firstBlocked));
-  }
-}
-
-function addToSet(arr, s) {
-  arr[s] = 1;
-}
-
-function addSetToSelect(set, selectId, selectedElement) {
-  var select = document.getElementById(selectId);
-
-  //Adding "all"
-  var opt = document.createElement("option");
-  opt.value = "All";
-  opt.innerHTML = "All";
-  if (typeof selectedElement === "undefined" || selectedElement=="" || selectedElement==null) {
-    opt.selected = true;
-  }
-  select.appendChild(opt);
-
-  //Adding other options
-  for (var s in set) {
-    if (set.hasOwnProperty(s)) {
-      var opt = document.createElement("option");
-      opt.value = s;
-      opt.innerHTML = s;
-      if (s==selectedElement) {
-        opt.selected = true;
-      }
-      select.appendChild(opt);
-    }
+    addFirstBlockedTask(firstBlocked);
   }
 }
 
 function fillSelections(tasks) {
-  var sets = {};
-  var responsibles = {};
-  for (var i=0; i<tasks.length; i++) {
-    addToSet(sets, tasks[i]["set"]);
-    addToSet(responsibles, tasks[i]["responsible"]);
-  }
-  addSetToSelect(sets, "selection_set", filterSet);
-  addSetToSelect(responsibles, "selection_responsible", filterResponsible);
+  melFilter.fillOptionsFromTasks(tasks);
+  melFilter.populateSetOptions("selection_set", updatePageContent);
+  melFilter.populateResponsibleOptions("selection_responsible", updatePageContent);
 }
 
 function updatePageContent() {
@@ -488,28 +286,8 @@ function updatePageContent() {
   $("#blocked_tasks").find(".task_row").not(".sample_task").remove();
   $("#first_blocked_task").hide();
   $("#first_todo_task").hide();
-  buildTaskList(tasks);
+  buildTaskList(melTasks.tasks);
 }
-
-$("#selection_set").on("change", function() {
-  if (""+this.value=="All") {
-    filterSet = "";
-  } else {
-    filterSet = ""+this.value;
-  }
-  $.cookie("filter_set", filterSet);
-  updatePageContent();
-});
-
-$("#selection_responsible").on("change", function() {
-  if (""+this.value=="All") {
-    filterResponsible = "";
-  } else {
-    filterResponsible = ""+this.value;
-  }
-  $.cookie("filter_responsible", filterResponsible);
-  updatePageContent();
-});
 
 function convertNumberToTwoDigitString(n) {
   if (n>9) {
@@ -539,43 +317,10 @@ $("#button_finish").click(function(){
 
 });
 
-function getTaskShortString(task) {
-  if (task["experiment"]!="") {
-    return "#" + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]" + " - " + task["responsible"];
-  } else {
-    return "#" + task["id"] + " " + task["name"] + " - " + task["responsible"];
-  }
-}
-
-function processTasks(tasks) {
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    processTaskDependency(task);
-    task["index"] = i+2;
-    task["shortstring"] = getTaskShortString(task);
-    task["results"] = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-}
-
-function processTaskDependency(task) {
-  var arrDepTasks = [];
-  var arrDepIds = task["dependency"].split(", ");
-  for (var j=0; j<arrDepIds.length; j++) {
-    var id = arrDepIds[j];
-    $.merge(arrDepTasks, getTaskById(id, task["set"], task["experiment"]));
-  }
-  task["dependency"] = arrDepTasks;
-}
-
 function importGSS(json) {
-  filterResponsible = $.cookie("filter_responsible");
-  filterSet = $.cookie("filter_set");
-
-  tasks = parseJson(json);
-  processTasks(tasks);
-
-  fillSelections(tasks);
-  buildTaskList(tasks);
+  melTasks = new MelTaskList(json);
+  fillSelections(melTasks.tasks);
+  buildTaskList(melTasks.tasks);
 }
 </script>
 
