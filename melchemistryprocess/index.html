@@ -302,8 +302,6 @@ function updatePageContent() {
 
 function startFirstTaskTimer() {
   melTaskTimer.start();
-//  var currentdate = new Date(); 
-//  var startTimeStr = melTaskTimer.convertNumberToTwoDigitString(currentdate.getHours()) + ":" + melTaskTimer.convertNumberToTwoDigitString(currentdate.getMinutes());
   $("#time_start").html(melTaskTimer.getStartTimeString());
   $("#button_start").attr("disabled","disabled");
   $("#button_finish").removeAttr("disabled");
