@@ -313,3 +313,84 @@ MelPeople.prototype.sendEmail = function(personId, task) {
 
 
 var melPeople = new MelPeople();
+
+////////////////////////////////////////////////////////////////
+// MelTaskTimer
+////////////////////////////////////////////////////////////////
+
+function MelTaskTimer() {
+  this.paused = false;
+  this.previousInternalsTimeInSeconds = 0;
+}
+
+MelTaskTimer.prototype.start = function() {
+  this.previousInternalsTimeInSeconds = 0;
+  this.startTime = new Date(); 
+  this.paused = true;
+  this.startInterval();
+} 
+
+MelTaskTimer.prototype.finish = function() {
+  this.finishInterval();
+  this.finishTime = new Date(); 
+} 
+
+MelTaskTimer.prototype.startInterval = function() {
+  if (this.paused) {
+    this.paused = false;
+    this.lastStartTime = new Date(); 
+  }
+} 
+
+MelTaskTimer.prototype.finishInterval = function() {
+  if (!this.paused) {
+    this.paused = true;
+    var curTime = new Date();
+    var secondsInLastInterval = Math.floor((curTime.getTime()-this.lastStartTime.getTime())/1000);
+    this.previousInternalsTimeInSeconds += secondsInLastInterval;
+  }
+} 
+
+MelTaskTimer.prototype.getPassedSeconds = function() {
+  var seconds = this.previousInternalsTimeInSeconds;
+  if (!this.paused) {
+    var curTime = new Date();
+    var secondsInLastInterval = Math.floor((curTime.getTime()-this.lastStartTime.getTime())/1000);
+    seconds += secondsInLastInterval;
+  }
+  return seconds;
+}
+
+MelTaskTimer.prototype.getPassedMinutes = function() {
+  return Math.floor(this.getPassedSeconds()/60) % 60;
+}
+
+MelTaskTimer.prototype.getPassedHours = function() {
+  return Math.floor(this.getPassedSeconds()/3600);
+}
+
+MelTaskTimer.prototype.convertNumberToTwoDigitString = function(n) {
+  if (n>9) {
+    return "" + n;
+  } else {
+    return "0" + n;
+  }
+}
+
+MelTaskTimer.prototype.getPassedTimeString = function() {
+  return "" + this.convertNumberToTwoDigitString(this.getPassedHours()) + 
+        ":" + this.convertNumberToTwoDigitString(this.getPassedMinutes());
+}
+
+MelTaskTimer.prototype.getStartTimeString = function() {
+  return "" + this.convertNumberToTwoDigitString(this.startTime.getHours()) + 
+        ":" + this.convertNumberToTwoDigitString(this.startTime.getMinutes());
+}
+
+MelTaskTimer.prototype.getFinishTimeString = function() {
+  return "" + this.convertNumberToTwoDigitString(this.finishTime.getHours()) + 
+        ":" + this.convertNumberToTwoDigitString(this.finishTime.getMinutes());
+}
+
+var melTaskTimer = new MelTaskTimer();
+
