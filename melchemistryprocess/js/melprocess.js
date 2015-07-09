@@ -181,17 +181,18 @@ MelFilter.prototype.fillOptionsFromTasks = function(tasks) {
   this.responsibleOptions = convertOptionHashToArray(responsiblesOptionsHash);
 }
 
-MelFilter.prototype.populateSelectOptions = function(selectId, options, currentOption) {
+MelFilter.prototype.populateSelectOptions = function(selectId, options, currentOption, includeAllOption) {
   var select = document.getElementById(selectId);
 
-  //Adding "all"
-  var opt = document.createElement("option");
-  opt.value = "All";
-  opt.innerHTML = "All";
-  if (typeof selectedElement === "undefined" || selectedElement=="" || selectedElement==null) {
-    opt.selected = true;
+  if (includeAllOption) {
+    var opt = document.createElement("option");
+    opt.value = "All";
+    opt.innerHTML = "All";
+    if (typeof selectedElement === "undefined" || selectedElement=="" || selectedElement==null) {
+      opt.selected = true;
+    }
+    select.appendChild(opt);
   }
-  select.appendChild(opt);
 
   //Adding other options
   for (var i=0; i<options.length; i++) {
@@ -206,8 +207,8 @@ MelFilter.prototype.populateSelectOptions = function(selectId, options, currentO
   }
 }
 
-MelFilter.prototype.populateSetOptions = function(setSelectId, callbackContentRefresh) {
-  this.populateSelectOptions(setSelectId, this.setOptions, this.set);
+MelFilter.prototype.populateSetOptions = function(setSelectId, callbackContentRefresh, includeAllOption) {
+  this.populateSelectOptions(setSelectId, this.setOptions, this.set, includeAllOption);
 
   $("#"+setSelectId).on("change", function() {
     if (""+this.value=="All") {
@@ -221,8 +222,8 @@ MelFilter.prototype.populateSetOptions = function(setSelectId, callbackContentRe
   });
 }
 
-MelFilter.prototype.populateResponsibleOptions = function(setSelectId, callbackContentRefresh) {
-  this.populateSelectOptions(setSelectId, this.responsibleOptions, this.responsible);
+MelFilter.prototype.populateResponsibleOptions = function(setSelectId, callbackContentRefresh, includeAllOption) {
+  this.populateSelectOptions(setSelectId, this.responsibleOptions, this.responsible, includeAllOption);
 
   $("#selection_responsible").on("change", function() {
     if (""+this.value=="All") {

@@ -10,6 +10,7 @@
     <script src="js/jquery.js"></script>
     <script src="js/jquery.cookie.js"></script>
     <script src="js/bootstrap.js"></script>
+    <script src="js/melprocess.js"></script>
 
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
@@ -84,11 +85,8 @@
 
 <script>
 
-var tasks = [];
-var filterResponsible = "Kostya";
-var filterSet = "Kostya";
+var melTasks = {};
 var experiments = [];
-var taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
 var firstTodoTask = null;
 
 var taskCoordinates = {
@@ -144,32 +142,6 @@ var taskCoordinates = {
  570: [560,1100, 680,1140] 
 };
 
-function parseJson(json) {
-  var tasks = [];
-  for (var i=0; i<json.feed.entry.length; i++) {
-    tasks[i] = {};
-    for (var p=0; p<taskFields.length; p++) {
-      var field = taskFields[p];
-      tasks[i][field] = json.feed.entry[i]["gsx$"+field]["$t"];
-    }
-  }
-  return tasks;
-}
-                       
-function getTaskById(id, set, experiment) {
-  var arr = [];
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    if (task["id"]==id && 
-        task["set"]==set && 
-        (experiment=="" || task["experiment"]=="" || task["experiment"]==experiment)
-    ) {
-      arr.push(task);
-    }
-  }
-  return arr;
-}
-
 function getTaskByIdAndPercentage(id, set, percentage) {
   var arr = [];
   var experimentIndex = Math.floor(percentage * experiments.length);
@@ -186,73 +158,12 @@ function getTaskByIdAndPercentage(id, set, percentage) {
   return null;
 }
 
-function isTaskReadyToStart(task) {
-  var allDepReady = true;
-  for (var i=0; i<task["dependency"].length; i++) {
-    var dep = task["dependency"][i];
-    if (dep!=null) {
-      if (dep["status"]!="done") {
-        allDepReady = false;
-      }
-    }
-  }
-  return allDepReady;
-}
-
-function getTasksReleasedAfterThatIsDone(task) {
-  var arr = [];
-
-  for (var i=0; i<tasks.length; i++) {
-    var t = tasks[i];
-    if (t["status"]!="done") {
-      var dependsOnThatTask = false;
-      var dependsOnOtherNotDone = false;
-
-      for (var j=0; j<t["dependency"].length; j++) {
-        var dep = t["dependency"][j];
-        if (dep==task) {
-          dependsOnThatTask = true;
-        } else {
-          if (dep["status"]!="done") {
-            dependsOnOtherNotDone = true;
-          }
-        }
-      }
-
-      if (dependsOnThatTask && !dependsOnOtherNotDone) {
-        arr.push(t);
-      }
-    }
-  }
-
-  return arr;
-}
-
-function populateTaskData(container, task) {
-  for (var field in task) {
-    if (task.hasOwnProperty(field)) {
-      $(container).find(".field_"+field).html(task[field]);
-    }
-  }
-}
-
-function getDescriptionOfTasksBlockingThis(task) {
-  var blockedStr = "";
-  for (var j=0; j<task["dependency"].length; j++) {
-    var dep = task["dependency"][j];
-    if (dep["status"] != "done") {
-      blockedStr = blockedStr + dep["shortstring"] + "<br>";
-    }
-  }
-  return blockedStr;
-}
-
 function getExperimentList() {
   var experiments = {}
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    if (task["set"]==filterSet && task["experiment"]!="") {
-      experiments[task["experiment"]] = 1;
+  for (var i=0; i<melTasks.tasks.length; i++) {
+    var task = melTasks.tasks[i];
+    if (task.set==melFilter.set && task.experiment!="") {
+      experiments[task.experiment] = 1;
     }
   }
   var experimentList = [];
@@ -277,112 +188,29 @@ function drawAllTasks() {
   ctx.drawImage(img, 0, 0);
 
   //Draw task rects
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    if (task["set"]==filterSet) {
-      if (task["experiment"]=="") {
-        task["experiment_index"] = -1;
+  for (var i=0; i<melTasks.tasks.length; i++) {
+    var task = melTasks.tasks[i];
+    if (task.set==melFilter.set) {
+      if (task.experiment=="") {
+        task.experiment_index = -1;
       } else {
-        task["experiment_index"] = experiments.indexOf(task["experiment"]);
+        task.experiment_index = experiments.indexOf(task.experiment);
       }
       drawTask(ctx, task, experiments.length);
     }
   }
 }
 
-function addToSet(arr, s) {
-  arr[s] = 1;
-}
-
-function addSetToSelect(set, selectId, selectedElement) {
-  var select = document.getElementById(selectId);
-
-  //Adding other options
-  for (var s in set) {
-    if (set.hasOwnProperty(s)) {
-      var opt = document.createElement("option");
-      opt.value = s;
-      opt.innerHTML = s;
-      if (s==selectedElement) {
-        opt.selected = true;
-      }
-      select.appendChild(opt);
-    }
-  }
-}
-
 function fillSelections(tasks) {
-  var sets = {};
-  var responsibles = {};
-  for (var i=0; i<tasks.length; i++) {
-    addToSet(sets, tasks[i]["set"]);
-    addToSet(responsibles, tasks[i]["responsible"]);
-  }
-  addSetToSelect(sets, "selection_set", filterSet);
-  addSetToSelect(responsibles, "selection_responsible", filterResponsible);
-}
-
-function updatePageContent() {
-  drawAllTasks();
-}
-
-$("#selection_set").on("change", function() {
-  if (""+this.value=="All") {
-    filterSet = "";
-  } else {
-    filterSet = ""+this.value;
-  }
-  $.cookie("filter_set", filterSet);
-  updatePageContent();
-});
-
-$("#selection_responsible").on("change", function() {
-  if (""+this.value=="All") {
-    filterResponsible = "";
-  } else {
-    filterResponsible = ""+this.value;
-  }
-  $.cookie("filter_responsible", filterResponsible);
-  updatePageContent();
-});
-
-function getTaskShortString(task) {
-  if (task["experiment"]!="") {
-    return "#" + task["id"] + " " + task["name"] + " [" + task["experiment"] + "]" + " - " + task["responsible"];
-  } else {
-    return "#" + task["id"] + " " + task["name"] + " - " + task["responsible"];
-  }
-}
-
-function processTasks(tasks) {
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    processTaskDependency(task);
-    task["index"] = i+2;
-    task["shortstring"] = getTaskShortString(task);
-    task["results"] = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  }
-}
-
-function processTaskDependency(task) {
-  var arrDepTasks = [];
-  var arrDepIds = task["dependency"].split(", ");
-  for (var j=0; j<arrDepIds.length; j++) {
-    var id = arrDepIds[j];
-    $.merge(arrDepTasks, getTaskById(id, task["set"], task["experiment"]));
-  }
-  task["dependency"] = arrDepTasks;
+  melFilter.fillOptionsFromTasks(tasks);
+  melFilter.populateSetOptions("selection_set", drawAllTasks, false);
+  melFilter.populateResponsibleOptions("selection_responsible", drawAllTasks, false);
 }
 
 function importGSS(json) {
-  filterResponsible = $.cookie("filter_responsible");
-  filterSet = $.cookie("filter_set");
-
-  tasks = parseJson(json);
+  melTasks = new MelTaskList(json);
   experiments = getExperimentList();
-  processTasks(tasks);
-
-  fillSelections(tasks);
+  fillSelections(melTasks.tasks);
   drawAllTasks();
 }
 
@@ -396,19 +224,19 @@ function drawTask(ctx, task, numberOfExperiments) {
     var height = coordinates[3]-y;
 
     //Update coordinates for experiment tasks (only a fraction of rectangle is filled)
-    if (task["experiment_index"]!=-1) {
+    if (task.experiment_index!=-1) {
       width = (coordinates[2]-coordinates[0])/numberOfExperiments;
-      x = coordinates[0]+width*task["experiment_index"];
+      x = coordinates[0]+width*task.experiment_index;
       width = width-1;
     }
 
     ctx.globalAlpha = 0.5;
-    if (task["status"]=="done") {
+    if (task.isDone()) {
       ctx.fillStyle = "blue";
       ctx.fillRect(x, y, width, height);
     } else {
-      if (task["responsible"]==filterResponsible) {
-        if (isTaskReadyToStart(task)) {
+      if (task.responsible==melFilter.responsible) {
+        if (task.isReadyToStart()) {
           ctx.fillStyle = "red";
           ctx.fillRect(x, y, width, height);
         } else {
@@ -428,16 +256,12 @@ function getTaskByCoordinate(x, y) {
     if (taskCoordinates.hasOwnProperty(id)) {
       var c = taskCoordinates[id];
       if (x>=c[0] && x<=c[2] && y>=c[1] && y<=c[3]) {
-        return getTaskByIdAndPercentage(id, filterSet, (x-c[0])/(c[2]-c[0]));
+        return getTaskByIdAndPercentage(id, melFilter.set, (x-c[0])/(c[2]-c[0]));
       }
     }
   }
   return null;
 }
-
-$("#diagram_canvas").mousemove(function(event) {
-//    console.log("move: " + event.pageX + ", " + event.pageY);
-});
 
 $("#diagram_canvas").mousedown(function(event) {
   var offset = $(this).offset();
@@ -446,7 +270,7 @@ $("#diagram_canvas").mousedown(function(event) {
 
   var task = getTaskByCoordinate(x, y);
   if (task!=null) {
-    populateTaskData($("#task_dialog"), task);
+    task.populateTaskData($("#task_dialog"));
     $("#task_dialog").modal();
   }
 });

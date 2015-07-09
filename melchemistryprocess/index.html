@@ -276,8 +276,8 @@ function buildTaskList(tasks) {
 
 function fillSelections(tasks) {
   melFilter.fillOptionsFromTasks(tasks);
-  melFilter.populateSetOptions("selection_set", updatePageContent);
-  melFilter.populateResponsibleOptions("selection_responsible", updatePageContent);
+  melFilter.populateSetOptions("selection_set", updatePageContent, true);
+  melFilter.populateResponsibleOptions("selection_responsible", updatePageContent, true);
 }
 
 function updatePageContent() {
