@@ -80,7 +80,7 @@
           <tr><td>Blocked by</td><td class="field_blockedby"></td></tr>
           <tr><td>Google Sheet Row</td><td class="field_index"></td></tr>
         </table>
-      <div>
+      <div id="start_button_section">
         <button class="btn btn-primary btn-lg" id="button_start">Start</button>
         <button class="btn btn-primary btn-lg" id="button_pause" disabled="disabled">Pause</button>
         <button class="btn btn-primary btn-lg" id="button_finish" disabled="disabled">Finish</button>
@@ -364,6 +364,12 @@ function getTaskByCoordinate(x, y) {
 }
 
 function showTaskDialog(task) {
+  if (!task.isDone() && task.isReadyToStart()) {
+    $("#start_button_section").show();
+  } else {
+    $("#start_button_section").hide();
+  }
+
   $("#button_start").click(function() {
     melTaskTimer.start();
     $("#time_start").html(melTaskTimer.getStartTimeString());
