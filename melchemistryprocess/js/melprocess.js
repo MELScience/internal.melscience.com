@@ -147,6 +147,10 @@ function MelFilter() {
     var arr = location.hash.substring(1).split("-");
     this.set = arr[0];
     this.responsible = arr[1];
+    $.cookie("filter_set", this.set);
+    $.cookie("filter_responsible", this.responsible);
+  } else {
+    this.updateUrlAddress();
   }
 }
 

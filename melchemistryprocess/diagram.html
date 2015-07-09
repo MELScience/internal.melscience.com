@@ -73,6 +73,7 @@
           <tr><td>Total time</td><td class="field_totaltime"></td></tr>
           <tr><td>Description</td><td class="field_description"></td></tr>
           <tr><td>Results</td><td class="field_results"></td></tr>
+          <tr><td>Blocked by</td><td class="field_blockedby"></td></tr>
           <tr><td>Google Sheet Row</td><td class="field_index"></td></tr>
         </table>
       </div>
@@ -146,11 +147,11 @@ function getTaskByIdAndPercentage(id, set, percentage) {
   var arr = [];
   var experimentIndex = Math.floor(percentage * experiments.length);
   var experiment = experiments[experimentIndex];
-  for (var i=0; i<tasks.length; i++) {
-    var task = tasks[i];
-    if (task["id"]==id && 
-        task["set"]==set && 
-        (task["experiment"]=="" || task["experiment"]==experiment)
+  for (var i=0; i<melTasks.tasks.length; i++) {
+    var task = melTasks.tasks[i];
+    if (task.id==id && 
+        task.set==set && 
+        (task.experiment=="" || task.experiment==experiment)
     ) {
       return task;
     }
@@ -256,6 +257,7 @@ function getTaskByCoordinate(x, y) {
     if (taskCoordinates.hasOwnProperty(id)) {
       var c = taskCoordinates[id];
       if (x>=c[0] && x<=c[2] && y>=c[1] && y<=c[3]) {
+        console.log(c);
         return getTaskByIdAndPercentage(id, melFilter.set, (x-c[0])/(c[2]-c[0]));
       }
     }
@@ -269,6 +271,8 @@ $("#diagram_canvas").mousedown(function(event) {
   y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop - Math.floor(offset.top) + 1;
 
   var task = getTaskByCoordinate(x, y);
+  console.log("x="+x+"  y="+y);
+  console.log(task);
   if (task!=null) {
     task.populateTaskData($("#task_dialog"));
     $("#task_dialog").modal();
