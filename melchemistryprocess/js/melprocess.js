@@ -71,6 +71,9 @@ MelTask.prototype.getTasksReleasedAfterThatIsDone = function() {
     }
   }
 
+  console.log("getTasksReleasedAfterThatIsDone");
+  console.log(this);
+  console.log(arr);
   return arr;
 }
 
@@ -278,11 +281,50 @@ MelPeople.prototype.find = function(personId) {
   return null;
 }
 
+MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
+  var releasedTasks = task.getTasksReleasedAfterThatIsDone();
+  var strReleasedTasks = "";
+  for (var i=0; i<releasedTasks.length; i++) {
+    strReleasedTasks = strReleasedTasks + releasedTasks[i].getShortString() + "<br>"
+  }
+  
+  $.ajax({
+    type: 'POST',
+    url: 'https://mandrillapp.com/api/1.0/messages/send.json',
+    data: {
+      'key': 'Tge2LRQL1Hk4rlhPes7qwQ',
+      'message': {
+        'from_email': 'robot@melscience.com',
+        'to': [
+            {
+              'email': "vassili@melscience.com",
+              'name': "Vassili Philippov",
+              'type': 'to'
+            }
+          ],
+        'autotext': 'true',
+        'subject': 'Done task: ' + task.shortstring,
+        'html': '<h1>#' + task.id + " " + task.name + " [" + task.experiment + "]</h1>" +  
+                "<br>Description: " + task.description + 
+                "<br>Results: " + task.results + 
+                "<br>Responsible: " + task.responsible + 
+                "<br>Google Sheet Row #: " + task.index + 
+                "<br><br>Released tasks:<br>" + strReleasedTasks +
+                "<br><br><a href='internal.melscience.com/melchemistryprocess/'>MEL Chemistry process page</a>" + 
+                "<br><a href='https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918'>Google Sheet</a>"
+      }
+    }
+   }).done(function(response) {
+     console.log(response); // if you're into that sorta thing
+ });
+}
+
 MelPeople.prototype.sendEmail = function(personId, task) {
   var person = this.find(personId);
   if (person==null) {
     alert("Error sending email. Person '" + personId + "' is not found");
   }
+  console.log("Sending email. Subject='" + "Next task: " + task.shortstring + "' to " + person.email);
   $.ajax({
     type: 'POST',
     url: 'https://mandrillapp.com/api/1.0/messages/send.json',
@@ -303,7 +345,7 @@ MelPeople.prototype.sendEmail = function(personId, task) {
                 "<br>Description: " + task.description + 
                 "<br>Results: " + task.results + 
                 "<br><br><a href='internal.melscience.com/melchemistryprocess/'>MEL Chemistry process page</a>" + 
-                "<br><br><a href='https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918'>Google Sheet</a>"
+                "<br><a href='https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918'>Google Sheet</a>"
       }
     }
    }).done(function(response) {

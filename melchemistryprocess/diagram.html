@@ -190,6 +190,7 @@ var taskCoordinates = {
 };
 
 function showFinishTasksDialog(task) {
+  melPeople.sendTaskFinishEmailToVassili(task);
   var releasedTasks = task.getTasksReleasedAfterThatIsDone();
   console.log("releasedTasks");
   console.log(releasedTasks);

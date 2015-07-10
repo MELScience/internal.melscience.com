@@ -164,9 +164,9 @@ h2 {margin-top: 50px;}
         </div>
 
         <h4 style="margin-top: 30px;">The following tasks are now released and ready to do</h4>
-        <div id="released_tasks">
-          <ul class="sample_task">
-            <li class="field_shortstring"></li>
+        <div>
+          <ul id="released_tasks">
+            <li class="sample_task"><span class="field_shortstring"></span></li>
           </ul>
         </div>
       </div>
@@ -182,6 +182,7 @@ var melTasks = {};
 var firstTodoTask = null;
 
 function showFinishTasksDialog() {
+  melPeople.sendTaskFinishEmailToVassili(firstTodoTask);
   var releasedTasks = firstTodoTask.getTasksReleasedAfterThatIsDone();
 
   firstTodoTask.populateTaskData($("#finished_task"));
