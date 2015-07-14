@@ -71,9 +71,6 @@ MelTask.prototype.getTasksReleasedAfterThatIsDone = function() {
     }
   }
 
-  console.log("getTasksReleasedAfterThatIsDone");
-  console.log(this);
-  console.log(arr);
   return arr;
 }
 
@@ -107,7 +104,10 @@ MelTaskList.prototype.processTasks = function() {
     this.processTaskDependency(task);
     task.index = i+2;
     task.shortstring = task.getShortString();
-    task.results = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    console.log(task.results);
+    task.results = task.results.replace(/<set_innertitle>/g, task.set).replace(/<experiment_innertitle>/g, task.experiment);
+    console.log(task.results);
+//    task.results = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     task.blockedby = task.getDescriptionOfTasksBlockingThis(); 
   }
 }
