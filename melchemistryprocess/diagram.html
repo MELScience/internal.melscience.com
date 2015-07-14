@@ -215,8 +215,6 @@ function showFinishTasksDialog(task) {
     $(copy).removeClass("sample_task");
     copy.show();
     releasedTask.populateTaskData(copy);
-    console.log("populating released task");
-    console.log(releasedTask);
     $("#released_tasks").append(copy); 
   }
   if (releasedTasks.length==0) {
@@ -276,7 +274,6 @@ function getExperimentList() {
 }
 
 function drawAllTasks() {
-  console.log(experiments);
   var canvas = document.getElementById("diagram_canvas");
   var ctx = canvas.getContext("2d");
 
@@ -309,12 +306,13 @@ function fillSelections(tasks) {
 
 function importGSS(json) {
   melTasks = new MelTaskList(json);
-  experiments = getExperimentList();
   fillSelections(melTasks.tasks);
+  experiments = getExperimentList();
   drawAllTasks();
 }
 
 function drawTask(ctx, task, numberOfExperiments) {
+  experiments = getExperimentList();
   var coordinates = taskCoordinates[task["id"]];
   if (coordinates!=null) {
 
@@ -356,7 +354,6 @@ function getTaskByCoordinate(x, y) {
     if (taskCoordinates.hasOwnProperty(id)) {
       var c = taskCoordinates[id];
       if (x>=c[0] && x<=c[2] && y>=c[1] && y<=c[3]) {
-        console.log(c);
         return getTaskByIdAndPercentage(id, melFilter.set, (x-c[0])/(c[2]-c[0]));
       }
     }
