@@ -255,14 +255,14 @@ function MelPeople() {
     {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Sergey"},
     {name: "Konstantin Gurianov", email: "konstantin@melscience.com", id: "Kostya"},
     {name: "Denis Sapegin", email: "dasapegin@gmail.com", id: "Denis"},
-    {name: "Andrey Lyashin", email: "andrey.lyashin@scicon.ru", id: "Andrei"},
+    {name: "Andrey Lyashin", email: "andrey.lyashin@scicon.ru", id: "Andrey"},
     {name: "Kate Gotina", email: "gotinakatia92@gmail.com", id: "EN Translator"},
     {name: "Kate Erofeeva", email: "ekaterina.aleks.erofeeva@gmail.com", id: "RU Editor"},
     {name: "Galina Konstantinova", email: "galina@melscience.com", id: "Galya"},
     {name: "Dmitry Groshev", email: "si14@melscience.com", id: "Dmitry"},
     {name: "Vassili Philippov", email: "vassili@melscience.com", id: "US cert lab"},
     {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Science writer"},
-    {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Video producer"},
+    {name: "Vassili Philippov", email: "sooyeon.daisy@gmail.com", id: "Video producer"},
     {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Video translator"},
     {name: "Artem Messorosh", email: "homess@melscience.com", id: "Artem"}
  ];
