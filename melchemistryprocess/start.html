@@ -66,9 +66,6 @@ h2 {margin-top: 50px;}
 <tr><td>Experiment #2 inner title</td><td><input type="text" id="experiment2_inner_title" size="50"></td></tr>
 <tr><td>Experiment #3 inner title</td><td><input type="text" id="experiment3_inner_title" size="50"></td></tr>
 <tr><td>Experiment #4 inner title</td><td><input type="text" id="experiment4_inner_title" size="50"></td></tr>
-<tr><td>Experiment #5 inner title</td><td><input type="text" id="experiment5_inner_title" size="50"></td></tr>
-<tr><td>Experiment #6 inner title</td><td><input type="text" id="experiment6_inner_title" size="50"></td></tr>
-<tr><td>Experiment #7 inner title</td><td><input type="text" id="experiment7_inner_title" size="50"></td></tr>
 </table>
 <button class="btn btn-primary btn-lg" id="button_generate">Generate</button>
 </div>
@@ -106,7 +103,13 @@ Repeate these five steps for each of the experiments in this set (<b>{experiment
   <li>Make sure that folder with set inner title (<b>{set_inner_title}</b>) exists</li>
   <li>For each experiment create a subfolder with experiment inner titles (<b>{experiment_inner_titles}</b>) as name</li>
 </ol>
-<h3>7. Send pre-demonstration appointment</h3>
+<h3>7. Create experiments in the MEL Science Admin</h3>
+<ol>
+  <li>Open <a href="https://www.melscience.com/ru/admin/experiments/list/" target="_blank">MEL Science Admin</a></li>
+  <li>Create new experiment for each of the experiments (<b>{experiment_inner_titles}</b>)</li>
+  <li>Make sure that "Inner title" and "Theme" fields are set for all experiments (all other fields can be left empty so far)</li>
+</ol>
+<h3>8. Send pre-demonstration appointment</h3>
 <style>
 div.form-to input {margin-right: 5px;}
 </style>
@@ -183,7 +186,7 @@ $("#predemo_date").datepicker();
 $("#button_generate").click(function() {
   experiment_inner_titles = [];
   set_inner_title = $("#set_inner_title").val();
-  for (var i=1; i<=7; i++) {
+  for (var i=1; i<=4; i++) {
     var experiment_inner_title = $("#experiment" + i + "_inner_title").val();
     if (experiment_inner_title!="") {
       experiment_inner_titles.push(experiment_inner_title);
