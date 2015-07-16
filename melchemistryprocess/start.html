@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>New set start process</title>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/datepicker.css" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+    <script src="js/bootstrap-datepicker.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/melprocess.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body style="padding-left: 30px; padding-top: 30px; padding-right: 30px;">
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="></a>
+        </div>
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li style="color: #E0E0E0;"><a href="https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918" target="_blank">Google Sheet</a></li>
+            <li style="color: #E0E0E0;"><a href="index.html">Table</a></li>
+            <li style="color: #E0E0E0;"><a href="diagram.html">Diagram</a></li>
+            <li style="color: #E0E0E0;" class="active"><a href="start.html">New Set</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+<style>
+table.donetasktable td {color: #A0A0A0;}
+h2 {margin-top: 50px;}
+.sample_task {display:none;}
+</style>
+
+<div class="container-fluid" style="padding-top: 30px;">
+
+<h2>Starting New Set</h2>
+
+<div>
+<table class="table" style="width: 600px;">
+<tr><td>Pre-demonstration date</td><td><input type="text" class="span2" data-date-format="dd/mm/yy" id="predemo_date"></td></tr>
+<tr><td>Pre-demonstration time</td><td><input type="text" id="predemo_time" size="7"></td></tr>
+<tr><td>Set inner title</td><td><input type="text" id="set_inner_title" size="30"></td></tr>
+<tr><td>Experiment #1 inner title</td><td><input type="text" id="experiment1_inner_title" size="50"></td></tr>
+<tr><td>Experiment #2 inner title</td><td><input type="text" id="experiment2_inner_title" size="50"></td></tr>
+<tr><td>Experiment #3 inner title</td><td><input type="text" id="experiment3_inner_title" size="50"></td></tr>
+<tr><td>Experiment #4 inner title</td><td><input type="text" id="experiment4_inner_title" size="50"></td></tr>
+<tr><td>Experiment #5 inner title</td><td><input type="text" id="experiment5_inner_title" size="50"></td></tr>
+<tr><td>Experiment #6 inner title</td><td><input type="text" id="experiment6_inner_title" size="50"></td></tr>
+<tr><td>Experiment #7 inner title</td><td><input type="text" id="experiment7_inner_title" size="50"></td></tr>
+</table>
+<button class="btn btn-primary btn-lg" id="button_generate">Generate</button>
+</div>
+
+<div id="instruction_block" style="display: none">
+
+<h3>1. Open <a href="https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918" target="_blank">Google Sheet</a></li></h3>
+<h3>2. Copy set-related tasks</h3>
+<ol>
+  <li>Switch to <b>to copy: set tasks</b> tab in Google Sheet</li>
+  <li>Select all rows starting from the second (<span style="color: red">Do not select the first row!</span>)</li>
+  <li>Copy this content to clipboard (Ctrl+C)</li>
+  <li>Switch to <b>tasks</b> tab and paste (Ctrl+V) the selected rows to the end of the table</li>
+</ol>
+<h3>3. For each experiment copy experiment-related tasks</h3>
+<ol>
+  <li>Switch to <b>to copy: experiment tasks</b> tab in Google Sheet</li>
+  <li>Select all rows starting from the second (<span style="color: red">Do not select the first row!</span>)</li>
+  <li>Copy this content to clipboard (Ctrl+C)</li>
+  <li>Switch to <b>tasks</b> tab and paste (Ctrl+V) the selected rows to the end of the table</li>
+  <li>Replace (Ctrl+H) <b>replace_with_experiment_id</b> with experiment inner title</li>
+</ol>
+Repeate these five steps for each of the experiments in this set (<b>{experiment_inner_titles}</b>).
+<h3>4. Replace (Ctrl+H) <b>replace_with_set_id</b> with set inner title (<b>{set_inner_title}</b>)</h3>
+<h3>5. Check that the tasks are added correctly</h3>
+<ol>
+  <li>Open <a href="diagram.html" target="_blank">the Diagram</a></li>
+  <li>Select the new set</li>
+  <li>Click on 10-15 different steps to make sure that all the tasks are added correctly</li>
+  <li>Do not forget to check that experiment tasks are split by number of different experiments in the set</li>
+</ol>
+<h3>6. Create folders in Google Drive</h3>
+<ol>
+  <li>Open <b>Google Drive\MEL Science\MEL Chemistry\topics</b></li>
+  <li>Make sure that folder with set inner title (<b>{set_inner_title}</b>) exists</li>
+  <li>For each experiment create a subfolder with experiment inner titles (<b>{experiment_inner_titles}</b>) as name</li>
+</ol>
+<h3>7. Send pre-demonstration appointment</h3>
+<style>
+div.form-to input {margin-right: 5px;}
+</style>
+<div id="people_list">
+</div>
+<div>
+Subject: <input type="text" id="email-subject" style="margin-top: 20px; margin-bottom: 20px;" readonly value="Set [{set_inner_title}] pre-demonstration appointment {predemo_date} {predemo_time}" size="60">
+</div>
+<div>
+<textarea id="email-body" rows="10" cols="80">
+<h1>Weekly set predemonstration</h1>
+Date: {predemo_date}<br>
+Time: {predemo_time}<br>
+Set: {set_inner_title}<br>
+Experiments: {experiment_inner_titles}<br>
+</textarea>
+</div>
+<div>
+<button class="btn btn-primary btn-lg" id="button_send">Send Emails</button>
+</div>
+
+</div>
+
+<script>
+var set_inner_title = "";
+var experiment_inner_titles = [];
+
+function sendEmailTo(emailAddress, emailName) {
+  var email_subject = $("#email-subject").val();
+  var email_body = $("#email-body").val();
+  
+  $.ajax({
+    type: 'POST',
+    url: 'https://mandrillapp.com/api/1.0/messages/send.json',
+    data: {
+      'key': 'Tge2LRQL1Hk4rlhPes7qwQ',
+      'message': {
+        'from_email': 'robot@melscience.com',
+        'to': [
+            {
+              'email': emailAddress,
+              'name': emailName,
+              'type': 'to'
+            }
+          ],
+        'autotext': 'true',
+        'subject': email_subject,
+        'html': email_body
+      }
+    }
+   }).done(function(response) {
+     console.log(response); // if you're into that sorta thing
+ });
+}
+
+function sendEmails() {
+  var emailsSentCounter = 0;
+  $("input", $("#people_list")).each(function () {
+    var emailAddress = this.value;
+    var emailName = $(this).parent().text();
+    var checked = $(this).prop("checked")
+    if (checked) {
+      sendEmailTo(emailAddress, emailName);
+      emailsSentCounter ++;
+    }
+  });
+  alert(emailsSentCounter + " emails sent");
+}
+
+$(document).ready(function(){
+
+$("#predemo_date").datepicker();
+
+$("#button_generate").click(function() {
+  experiment_inner_titles = [];
+  set_inner_title = $("#set_inner_title").val();
+  for (var i=1; i<=7; i++) {
+    var experiment_inner_title = $("#experiment" + i + "_inner_title").val();
+    if (experiment_inner_title!="") {
+      experiment_inner_titles.push(experiment_inner_title);
+      console.log(experiment_inner_title);
+    }
+  }
+
+  var html = $("#instruction_block").html();
+  html = html.replace(/{set_inner_title}/g, set_inner_title);
+  html = html.replace(/{experiment_inner_titles}/g, experiment_inner_titles.join(", "));
+  html = html.replace(/{predemo_date}/g, $("#predemo_date").val());
+  html = html.replace(/{predemo_time}/g, $("#predemo_time").val());
+  $("#instruction_block").html(html);
+
+  var peopleHtml = "";
+  for (var p=0; p<melPeople.people.length; p++) {
+    var person = melPeople.people[p];
+    peopleHtml = peopleHtml + "<div class='form-to'><input type='checkbox' checked value='" + person.email + "'>" + person.id + " (" + person.name + ")</div>";
+  }
+  $("#people_list").html(peopleHtml);
+  $("#instruction_block").show();
+
+  $("#button_send").click(function() {
+    sendEmails();
+  });
+});
+
+});
+
+</script>
+
+</div> <!-- /container -->
+
+</body>
+</html>
