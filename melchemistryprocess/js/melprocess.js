@@ -301,7 +301,7 @@ MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
             }
           ],
         'autotext': 'true',
-        'subject': 'Done task: ' + task.shortstring,
+        'subject': 'Done task: ' + task.shortstring + " '" + task.set + "'",
         'html': '<h1>#' + task.id + " " + task.name + " [" + task.experiment + "]</h1>" +  
                 "<br>Description: " + task.description + 
                 "<br>Results: " + task.results + 
