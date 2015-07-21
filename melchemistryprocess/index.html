@@ -40,6 +40,7 @@
             <li style="color: #E0E0E0;" class="active"><a href="index.html">Table</a></li>
             <li style="color: #E0E0E0;"><a href="diagram.html">Diagram</a></li>
             <li style="color: #E0E0E0;"><a href="start.html">New Set</a></li>
+            <li style="color: #E0E0E0;"><a href="https://melscience.com/internal/">Internal</a></li>
             <li style="color: #E0E0E0;"><span style="margin-left: 30px;">Set: </span><select id="selection_set" style="color: black; margin-right: 30px; margin-bottom: 0px; margin-top: 15px;"></select></li>
             <li style="color: #E0E0E0;">Responsible: <select id="selection_responsible" style="color: black; margin-bottom: 0px; margin-top: 15px;"></select></li>
           </ul>
@@ -304,6 +305,7 @@ function updatePageContent() {
 
 function startFirstTaskTimer() {
   melTaskTimer.start();
+  melPeople.sendTaskStartEmailToVassili(firstTodoTask);
   $("#time_start").html(melTaskTimer.getStartTimeString());
   $("#button_start").attr("disabled","disabled");
   $("#button_finish").removeAttr("disabled");

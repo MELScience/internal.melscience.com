@@ -40,6 +40,7 @@
             <li style="color: #E0E0E0;"><a href="index.html">Table</a></li>
             <li style="color: #E0E0E0;" class="active"><a href="diagram.html">Diagram</a></li>
             <li style="color: #E0E0E0;"><a href="start.html">New Set</a></li>
+            <li style="color: #E0E0E0;"><a href="https://melscience.com/internal/">Internal</a></li>
             <li style="color: #E0E0E0;"><span style="margin-left: 30px;">Set: </span><select id="selection_set" style="color: black; margin-right: 30px; margin-bottom: 0px; margin-top: 15px;"></select></li>
             <li style="color: #E0E0E0;">Responsible: <select id="selection_responsible" style="color: black; margin-bottom: 0px; margin-top: 15px;"></select></li>
           </ul>
@@ -143,18 +144,21 @@ var taskCoordinates = {
   30: [570,  50, 640,  80],
   40: [650,  50, 790,  80],
   50: [510, 100, 630, 130],
+  51: [565, 163, 690, 193],
+  55: [480, 210, 600, 240],
   60: [210, 160, 330, 210],
-  80: [780, 160, 900, 200],
+  80: [750, 160, 870, 200],
   90: [920, 160,1040, 200],
   95: [920, 360,1040, 400],
   97: [770, 420, 890, 460],
- 100: [850, 220, 970, 270],
+  99: [640, 225, 760, 275],
+ 100: [880, 220,1000, 270],
  110: [850, 290, 970, 340],
  120: [ 30, 240, 150, 280],
  130: [ 30, 300, 150, 350],
  140: [170, 240, 290, 280],
  150: [310, 240, 430, 280],
- 160: [540, 305, 660, 345],
+ 160: [490, 305, 610, 345],
  170: [250, 310, 380, 350],
  180: [550, 420, 625, 460],
  190: [625, 420, 700, 460],
@@ -162,9 +166,9 @@ var taskCoordinates = {
  205: [ 50, 370, 200, 410],
  210: [ 30, 500, 150, 540],
  220: [920, 360,1040, 400],
- 225: [690, 300, 830, 340],
+ 225: [700, 300, 840, 340],
  230: [ 50, 430, 170, 470],
- 240: [210, 500, 365, 540],
+ 240: [210, 500, 361, 540],
  250: [710, 550, 830, 590],
  260: [780, 690, 840, 730],
  270: [490, 490, 610, 530],
@@ -187,7 +191,7 @@ var taskCoordinates = {
  440: [330, 710, 450, 750],
  450: [320, 850, 440, 890],
  460: [320, 920, 440, 970],
- 470: [550, 595, 670, 635],
+ 470: [500, 945, 620, 985],
  480: [650, 690, 770, 730],
  490: [185, 790, 285, 830],
  500: [200, 920, 300, 960],
@@ -385,6 +389,7 @@ function showTaskDialog(task) {
 
   $("#button_start").click(function() {
     melTaskTimer.start();
+    melPeople.sendTaskStartEmailToVassili(task);
     $("#time_start").html(melTaskTimer.getStartTimeString());
     $("#button_start").attr("disabled","disabled");
     $("#button_finish").removeAttr("disabled");

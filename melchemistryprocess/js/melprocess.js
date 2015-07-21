@@ -99,13 +99,18 @@ function MelTaskList(googleSheetJson) {
 }
 
 MelTaskList.prototype.processTasks = function() {
+  //First passage
   for (var i=0; i<this.tasks.length; i++) {
     var task = this.tasks[i];
     this.processTaskDependency(task);
     task.index = i+2;
     task.shortstring = task.getShortString();
     task.results = task.results.replace(/<set_innertitle>/g, task.set).replace(/<experiment_innertitle>/g, task.experiment);
-//    task.results = task["results"].replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  //Second passage
+  for (var i=0; i<this.tasks.length; i++) {
+    var task = this.tasks[i];
     task.blockedby = task.getDescriptionOfTasksBlockingThis(); 
   }
 }
@@ -279,7 +284,7 @@ MelPeople.prototype.find = function(personId) {
   return null;
 }
 
-MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
+MelPeople.prototype.sendTaskStatusEmailToVassili = function(task, status) {
   var releasedTasks = task.getTasksReleasedAfterThatIsDone();
   var strReleasedTasks = "";
   for (var i=0; i<releasedTasks.length; i++) {
@@ -301,7 +306,7 @@ MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
             }
           ],
         'autotext': 'true',
-        'subject': 'Done task: ' + task.shortstring + " '" + task.set + "'",
+        'subject': status + ': ' + task.shortstring + " '" + task.set + "'",
         'html': '<h1>#' + task.id + " " + task.name + " [" + task.experiment + "]</h1>" +  
                 "<br>Description: " + task.description + 
                 "<br>Results: " + task.results + 
@@ -315,6 +320,14 @@ MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
    }).done(function(response) {
      console.log(response); // if you're into that sorta thing
  });
+}
+
+MelPeople.prototype.sendTaskFinishEmailToVassili = function(task) {
+  this.sendTaskStatusEmailToVassili(task, "Done task");
+}
+
+MelPeople.prototype.sendTaskStartEmailToVassili = function(task) {
+  this.sendTaskStatusEmailToVassili(task, "Start task");
 }
 
 MelPeople.prototype.sendEmail = function(personId, task) {
