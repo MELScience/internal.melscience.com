@@ -1,7 +1,7 @@
 function MelTask(taskList, googleSheetJsonRecord) {
   this.taskList = taskList;
   this.taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
-  this.taskAdditionalFields = ["blockedby", "index", "shortstring"];
+  this.taskAdditionalFields = ["blockedby", "index", "shortstring", "checkitemsstring", "experimentid", "setnumber", "setid"];
   for (var i=0; i<this.taskFields.length; i++) {
     var field = this.taskFields[i];
     this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
@@ -105,7 +105,24 @@ MelTaskList.prototype.processTasks = function() {
     this.processTaskDependency(task);
     task.index = i+2;
     task.shortstring = task.getShortString();
+    task.setnumber = melSets[task.set].number;
+    task.setid = melSets[task.set].id;
     task.results = task.results.replace(/<set_innertitle>/g, task.set).replace(/<experiment_innertitle>/g, task.experiment);
+
+    //Add experiment id 
+    var e = melExperiments.getExperimentByInnerTitle(task.experiment);
+    if (e==null) {
+      task.experimentid = "";
+    } else {
+      task.experimentid = e.id;
+    }
+
+    //Add check items
+    task.checkitems = melChecklists.getCheckItems(task.id);
+    task.checkitemsstring = "";
+    for (var j=0; j<task.checkitems.length; j++) {
+      task.checkitemsstring += "<li>" + task.checkitems[j].getString(task) + "</li>";
+    }
   }
 
   //Second passage
@@ -446,4 +463,111 @@ MelTaskTimer.prototype.getFinishTimeString = function() {
 }
 
 var melTaskTimer = new MelTaskTimer();
+
+////////////////////////////////////////////////////////////////
+// MelExperiments & MelSets
+////////////////////////////////////////////////////////////////
+
+function MelExperiment(googleSheetJsonRecord) {
+  this.taskFields = ["innertitle", "id", "set", "setnumber", "setid"];
+  this.taskAdditionalFields = [];
+  for (var i=0; i<this.taskFields.length; i++) {
+    var field = this.taskFields[i];
+    this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
+  }
+}
+
+function MelExperiments(googleSheetJson) {
+  this.experiments = [];
+  for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
+    this.experiments[i] = new MelExperiment(googleSheetJson.feed.entry[i]);
+  }
+}
+
+MelExperiments.prototype.getExperimentByInnerTitle = function(innerTitle) {
+  for (var i=0; i<this.experiments.length; i++) {
+    var experiment = this.experiments[i];
+    if (experiment.innertitle==innerTitle) {
+      return experiment;
+    }
+  }
+  return null;
+}
+
+function importMelExperiments(googleSheetJson) {
+  melExperiments = new MelExperiments(googleSheetJson);
+
+  //Build melSets based on experiment list
+  melSets = {};
+  for (var i=0; i<melExperiments.experiments.length; i++) {
+    var e = melExperiments.experiments[i];
+    melSets[e.set] = {};
+    melSets[e.set].number = e.setnumber;
+    melSets[e.set].id = e.setid;
+  }
+}
+
+var melExperiments = null;
+var melSets = null;
+
+
+////////////////////////////////////////////////////////////////
+// MelChecklists
+////////////////////////////////////////////////////////////////
+
+function MelCheckItem(googleSheetJsonRecord) {
+  this.fields = ["taskid", "checkitem", "type"];
+  this.additionalFields = [];
+  for (var i=0; i<this.fields.length; i++) {
+    var field = this.fields[i];
+    this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
+  }
+}
+
+MelCheckItem.prototype.getString = function(task) {
+  var str = this.checkitem;
+  if (this.type=="experiment_page") {
+    str = "Check <a target='_blank' href='https://www.melscience.com/admin/experiments/update/<experiment_id>/'>experiment page</a> field '<b>" + this.checkitem + "</b>'";
+  }
+  if (this.type=="set_page") {
+    str = "Check <a target='_blank' href='https://www.melscience.com/admin/box/update/<set_id>/'>set page</a> field '<b>" + this.checkitem + "</b>'";
+  }
+  if (this.type=="google_drive_file") {
+    str = "File '<b>" + this.checkitem.replace("MEL Science\\MEL Chemistry\\topics\\", "") + "</b>' is created";
+  }
+  return str.replace(/<set_innertitle>/g, task.set).replace(/<set_number>/g, task.setnumber).replace(/<set_id>/g, task.setid).replace(/<experiment_innertitle>/g, task.experiment).replace(/<experiment_id>/g, task.experimentid);
+}
+
+//Populates HTML elements with class="field_xxx" with content of task property xxx, for all task properties
+MelCheckItem.prototype.populateCheckItemData = function(container, task) {
+  for (var i=0; i<this.fields.length; i++) {
+    var field = this.fields[i];
+    $(container).find(".field_"+field).html(this[field]);
+  }
+  $(container).find(".field_string").html(this.getString(task));
+}
+
+function MelCheckLists(googleSheetJson) {
+  this.checkitems = [];
+  for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
+    this.checkitems[i] = new MelCheckItem(googleSheetJson.feed.entry[i]);
+  }
+}
+
+MelCheckLists.prototype.getCheckItems = function(taskId) {
+  var arr = [];
+  for (var i=0; i<this.checkitems.length; i++) {
+    var checkItem = this.checkitems[i];
+    if (checkItem.taskid==taskId) {
+      arr.push(checkItem);
+    }
+  }
+  return arr;
+}
+
+function importMelChecklists(googleSheetJson) {
+  melChecklists = new MelCheckLists(googleSheetJson);
+}
+
+var melChecklists = null;
 

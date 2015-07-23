@@ -59,11 +59,12 @@
 
 <style>
 .sample_task {display:none;}
+.sample_checkitem {display:none;}
 </style>
 
 <!-- Modal -->
 <div class="modal fade" id="task_dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog" role="document" style="width: 900px;">
     <div class="modal-content">
       <div class="modal-header">
         <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
@@ -79,6 +80,7 @@
           <tr><td>Total time</td><td class="field_totaltime"></td></tr>
           <tr><td>Description</td><td class="field_description"></td></tr>
           <tr><td>Results</td><td class="field_results"></td></tr>
+          <tr><td>Checklist</td><td class="field_checkitemsstring"></td></tr>
           <tr><td>Blocked by</td><td class="field_blockedby"></td></tr>
           <tr><td>Google Sheet Row</td><td class="field_index"></td></tr>
         </table>
@@ -133,6 +135,32 @@
     </div>
   </div>
 </div>
+
+
+<!-- Modal -->
+<div class="modal fade" id="checklist_dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="myModalLabel">Check list</h4>
+      </div>
+      <div class="modal-body">
+        <div id="checklist_finished_task">
+          <h4 class="field_shortstring"></h4>
+        </div>
+
+        <div id="checkitems">
+          <p class="sample_checkitem" style="margin-top: 20px"><input type="checkbox"> <span class="field_string"></span></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" id="button_checklist_next">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 
 var melTasks = {};
@@ -208,7 +236,42 @@ var taskCoordinates = {
  610: [720,1240, 860,1280] 
 };
 
+function showChecklistDialog(task, oncontinue) {
+  task.populateTaskData($("#checklist_finished_task"));
+  var items = task.checkitems;
+
+  $("#checkitems").find("p").not(".sample_checkitem").remove();
+  for (var i=0; i<items.length; i++) {
+    var item = items[i];
+    var copy = $("#checkitems").find(".sample_checkitem").clone();
+    $(copy).removeClass("sample_checkitem");
+    copy.show();
+    item.populateCheckItemData(copy, task);
+    $("#checkitems").append(copy); 
+  }
+
+  $("#button_checklist_next").click(function() {
+    console.log($("#checkitems").find("input:visible").not(":checked"));
+    if ($("#checkitems").find("input:visible").not(":checked").length > 0) {
+      alert("Check all items before closing the task");
+    } else {
+      $("#checklist_dialog").modal("hide");
+      oncontinue(task);
+    }
+  });
+
+  $("#checklist_dialog").modal();
+}
+
 function showFinishTasksDialog(task) {
+  if (task.checkitems.length>0) {
+    showChecklistDialog(task, showFinishTasksDialog2);
+  } else {
+    showFinishTasksDialog2(task);
+  }
+}
+
+function showFinishTasksDialog2(task) {
   melPeople.sendTaskFinishEmailToVassili(task);
   var releasedTasks = task.getTasksReleasedAfterThatIsDone();
   console.log("releasedTasks");
@@ -323,7 +386,7 @@ function fillSelections(tasks) {
   melFilter.populateResponsibleOptions("selection_responsible", drawAllTasks, false);
 }
 
-function importGSS(json) {
+function importMelTasks(json) {
   melTasks = new MelTaskList(json);
   fillSelections(melTasks.tasks);
   experiments = getExperimentList();
@@ -437,7 +500,9 @@ window.onload = function() {
 </script>
 
 
-<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/o7f9vto/public/values?alt=json-in-script&callback=importGSS"></script>
+<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/obh5ppx/public/values?alt=json-in-script&callback=importMelExperiments"></script>
+<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/o6q741l/public/values?alt=json-in-script&callback=importMelChecklists"></script>
+<script src="https://spreadsheets.google.com/feeds/list/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/o7f9vto/public/values?alt=json-in-script&callback=importMelTasks"></script>
 
 </div> <!-- /container -->
 
