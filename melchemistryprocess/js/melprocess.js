@@ -164,6 +164,12 @@ MelTaskList.prototype.getTaskById = function(id, set, experiment) {
 function MelFilter() {
   this.set = $.cookie("filter_set");
   this.responsible = $.cookie("filter_responsible");
+  if (typeof this.set == "undefined") {
+    this.set = "";
+  }
+  if (typeof this.responsible == "undefined") {
+    this.responsible = "";
+  }
   this.setOptions = [];
   this.responsibleOptions = []
   if (location.hash!="") {
