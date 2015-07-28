@@ -50,6 +50,16 @@
 
 <div class="container-fluid" style="padding-top: 60px;">
 
+<div id="loading_indicator">
+  <div class="progress">
+    <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%">
+      Loading information from Google Sheet
+    </div>
+  </div>
+</div>
+
+<div id="after_loading_section" style="display:none;">
+
 <div style="padding: 20px;">
 <img src="images/legend.png">
 </div>
@@ -159,6 +169,8 @@
       </div>
     </div>
   </div>
+</div>
+
 </div>
 
 <script>
@@ -382,6 +394,8 @@ function drawAllTasks() {
 
 function fillSelections(tasks) {
   melFilter.fillOptionsFromTasks(tasks);
+  melFilter.forceCertainSetSelected();
+  melFilter.forceCertainResponsibleSelected();
   melFilter.populateSetOptions("selection_set", drawAllTasks, false);
   melFilter.populateResponsibleOptions("selection_responsible", drawAllTasks, false);
 }
@@ -391,6 +405,8 @@ function importMelTasks(json) {
   fillSelections(melTasks.tasks);
   experiments = getExperimentList();
   drawAllTasks();
+  $("#loading_indicator").hide();
+  $("#after_loading_section").show();
 }
 
 function drawTask(ctx, task, numberOfExperiments) {

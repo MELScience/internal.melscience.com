@@ -187,6 +187,22 @@ MelFilter.prototype.updateUrlAddress = function() {
   location.hash = [this.set, this.responsible].join("-");
 }
 
+MelFilter.prototype.forceCertainSetSelected = function() {
+  if (this.set=="") {
+    this.set = this.setOptions[0];
+    $.cookie("filter_set", this.set);
+    this.updateUrlAddress();
+  }
+}
+
+MelFilter.prototype.forceCertainResponsibleSelected = function() {
+  if (this.responsible=="") {
+    this.responsible = this.responsibleOptions[0];
+    $.cookie("filter_responsible", this.responsible);
+    this.updateUrlAddress();
+  }
+}
+
 MelFilter.prototype.isTaskMatched = function(task) {
   return (this.responsible=="" || task.responsible==this.responsible) &&
          (this.set=="" || task.set==this.set);

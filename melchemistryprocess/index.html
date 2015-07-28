@@ -81,6 +81,16 @@ h2 {margin-top: 50px;}
   <p><span class="field_blockedby"></span></p>
 </div>
 
+<div id="loading_indicator">
+  <div class="progress">
+    <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="50" aria-valuemin="0" aria-valuemax="100" style="width: 50%">
+      Loading information from Google Sheet
+    </div>
+  </div>
+</div>
+
+<div id="after_loading_section" style="display:none;">
+
 <h2>To do</h2>
 
 <table id="todo_tasks" cellpadding="0" cellspacing="0" class="table table-bordered" style="width: 940px;">
@@ -143,6 +153,8 @@ h2 {margin-top: 50px;}
     <td class="field_totaltime"></td>
   </tr>
 </table>
+
+</div>
 
 <!-- Modal -->
 <div class="modal fade" id="finish_task_dialog" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
@@ -403,6 +415,8 @@ function importMelTasks(json) {
   melTasks = new MelTaskList(json);
   fillSelections(melTasks.tasks);
   buildTaskList(melTasks.tasks);
+  $("#loading_indicator").hide();
+  $("#after_loading_section").show();
 }
 </script>
 
