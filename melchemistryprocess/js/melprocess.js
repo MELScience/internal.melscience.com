@@ -296,23 +296,16 @@ var melFilter = new MelFilter();
 // MelPeople - list of roles and people responsible for the tasks
 ////////////////////////////////////////////////////////////////
 
-function MelPeople() {
-  this.people = [
-    {name: "Vassili Philippov", email: "vassili@melscience.com", id: "Vasja"},
-    {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Sergey"},
-    {name: "Konstantin Gurianov", email: "konstantin@melscience.com", id: "Kostya"},
-    {name: "Denis Sapegin", email: "dasapegin@gmail.com", id: "Denis"},
-    {name: "Andrey Lyashin", email: "andrey.lyashin@scicon.ru", id: "Andrey"},
-    {name: "Kate Gotina", email: "gotinakatia92@gmail.com", id: "EN Translator"},
-    {name: "Kate Erofeeva", email: "ekaterina.aleks.erofeeva@gmail.com", id: "RU Editor"},
-    {name: "Galina Konstantinova", email: "galina@melscience.com", id: "Galya"},
-    {name: "Dmitry Groshev", email: "si14@melscience.com", id: "Dmitry"},
-    {name: "Vassili Philippov", email: "vassili@melscience.com", id: "US cert lab"},
-    {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Science writer"},
-    {name: "Vassili Philippov", email: "sooyeon.daisy@gmail.com", id: "Video producer"},
-    {name: "Sergey Safonov", email: "sergey@melscience.com", id: "Video translator"},
-    {name: "Artem Messorosh", email: "homess@melscience.com", id: "Artem"}
- ];
+function MelPeople(googleSheetJson) {
+  this.people = [];
+  for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
+    var entry = googleSheetJson.feed.entry[i];
+    var person = {};
+    person.name = entry["gsx$"+"name"]["$t"];
+    person.email = entry["gsx$"+"email"]["$t"];
+    person.id = entry["gsx$"+"id"]["$t"];
+    this.people.push(person);
+  }
 }
 
 MelPeople.prototype.find = function(personId) {
@@ -406,8 +399,11 @@ MelPeople.prototype.sendEmail = function(personId, task) {
  });
 }
 
+function importMelPeople(googleSheetJson) {
+  melPeople = new MelPeople(googleSheetJson);
+}
 
-var melPeople = new MelPeople();
+var melPeople = null;
 
 ////////////////////////////////////////////////////////////////
 // MelTaskTimer
@@ -600,14 +596,6 @@ var melChecklists = null;
 // MelRoles
 ////////////////////////////////////////////////////////////////
 
-function MelRole(googleSheetJsonRecord) {
-  this.fields = ["set", "role", "person"];
-  for (var i=0; i<this.fields.length; i++) {
-    var field = this.fields[i];
-    this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
-  }
-}
-
 function MelRoleList(googleSheetJson) {
   this.globalRoles = {};
   this.setRoles = {};
@@ -629,13 +617,12 @@ function MelRoleList(googleSheetJson) {
 
 MelRoleList.prototype.getResponsible = function(set, role) {
   if (!(role in this.globalRoles)) {
-    console.log("role is not found. role=" + role);
+    console.log("Error. Role '" + role + "' not found.");
   }
 
   var defaultResponsible = this.globalRoles[role];
   if (set in this.setRoles) {
     if (role in this.setRoles[set]) {
-      console.log("getResponsible exception set=" + set + "  role=" + role);
       return this.setRoles[set][role];
     }
   }
