@@ -1,7 +1,7 @@
 function MelTask(taskList, googleSheetJsonRecord) {
   this.taskList = taskList;
   this.taskFields = ["set", "id", "dependency", "type", "experiment", "name", "description", "results", "responsible", "control", "status", "starttime", "endtime", "totaltime"];
-  this.taskAdditionalFields = ["blockedby", "index", "shortstring", "checkitemsstring", "experimentid", "setnumber", "setid"];
+  this.taskAdditionalFields = ["blockedby", "index", "shortstring", "checkitemsstring", "experimentid", "setnumber", "setid", "responsiblerole"];
   for (var i=0; i<this.taskFields.length; i++) {
     var field = this.taskFields[i];
     this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
@@ -107,6 +107,9 @@ MelTaskList.prototype.processTasks = function() {
     task.shortstring = task.getShortString();
     task.setnumber = melSets[task.set].number;
     task.setid = melSets[task.set].id;
+    task.responsiblerole = task.responsible;
+    task.responsible = melRoles.getResponsible(task.set, task.responsible);
+    task.responsiblerole = task.responsiblerole + " (" + task.responsible + ")";
     task.results = task.results.replace(/<set_innertitle>/g, task.set).replace(/<experiment_innertitle>/g, task.experiment);
 
     //Add experiment id 
@@ -592,4 +595,56 @@ function importMelChecklists(googleSheetJson) {
 }
 
 var melChecklists = null;
+
+////////////////////////////////////////////////////////////////
+// MelRoles
+////////////////////////////////////////////////////////////////
+
+function MelRole(googleSheetJsonRecord) {
+  this.fields = ["set", "role", "person"];
+  for (var i=0; i<this.fields.length; i++) {
+    var field = this.fields[i];
+    this[field] = googleSheetJsonRecord["gsx$"+field]["$t"];
+  }
+}
+
+function MelRoleList(googleSheetJson) {
+  this.globalRoles = {};
+  this.setRoles = {};
+  for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
+    var entry = googleSheetJson.feed.entry[i];
+    var set = entry["gsx$"+"set"]["$t"];
+    var role = entry["gsx$"+"role"]["$t"];
+    var person = entry["gsx$"+"person"]["$t"];
+    if (set=="") {
+      this.globalRoles[role] = person;
+    } else {
+      if (!(set in this.setRoles)) {
+        this.setRoles[set] = {};
+      }
+      this.setRoles[set][role] = person;
+    }
+  }
+}
+
+MelRoleList.prototype.getResponsible = function(set, role) {
+  if (!(role in this.globalRoles)) {
+    console.log("role is not found. role=" + role);
+  }
+
+  var defaultResponsible = this.globalRoles[role];
+  if (set in this.setRoles) {
+    if (role in this.setRoles[set]) {
+      console.log("getResponsible exception set=" + set + "  role=" + role);
+      return this.setRoles[set][role];
+    }
+  }
+  return defaultResponsible;
+}
+
+function importMelRoles(googleSheetJson) {
+  melRoles = new MelRoleList(googleSheetJson);
+}
+
+var melRoles = null;
 
