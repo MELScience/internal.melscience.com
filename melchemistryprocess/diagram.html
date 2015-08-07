@@ -462,11 +462,7 @@ function getTaskByCoordinate(x, y) {
 }
 
 function showTaskDialog(task) {
-  if (!task.isDone() && task.isReadyToStart()) {
-    $("#start_button_section").show();
-  } else {
-    $("#start_button_section").hide();
-  }
+  $("#start_button_section").show();
 
   $("#button_start").click(function() {
     melTaskTimer.start();
