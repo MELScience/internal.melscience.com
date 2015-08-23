@@ -300,7 +300,7 @@ function showFinishTasksDialog2(task) {
   $("#button_finish").attr('disabled','disabled');
   $("#button_pause").attr('disabled','disabled');
   $("#button_pause").html("Pause");
-  $("#finished_task").find(".field_pastestring").val("done\t" + melTaskTimer.getStartTimeString() + "\t" + finishTimeStr + "\t" + melTaskTimer.getPassedTimeString());
+  $("#finished_task").find(".field_pastestring").val("done\t" + melTaskTimer.getStartTimeString() + "\t" + finishTimeStr + "\t" + melTaskTimer.getPassedTimeString() + "\t" + melTaskTimer.getDateString());
 
   //Released tasks
   $("#send_notification_action").show();
