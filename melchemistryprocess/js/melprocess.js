@@ -371,6 +371,10 @@ MelPeople.prototype.sendEmail = function(personId, task) {
     alert("Error sending email. Person '" + personId + "' is not found");
   }
   console.log("Sending email. Subject='" + "Next task: " + task.shortstring + "' to " + person.email);
+  var experiment = "" + task.experiment;
+  if (experiment=="") {
+    experiment = task.set;
+  } 
   $.ajax({
     type: 'POST',
     url: 'https://mandrillapp.com/api/1.0/messages/send.json',
@@ -387,7 +391,7 @@ MelPeople.prototype.sendEmail = function(personId, task) {
           ],
         'autotext': 'true',
         'subject': 'Next task: ' + task.shortstring,
-        'html': '<h1>#' + task.id + " " + task.name + " [" + task.experiment + "]</h1>" +  
+        'html': '<h1>#' + task.id + " " + task.name + " [" + experiment + "]</h1>" +  
                 "<br>Description: " + task.description + 
                 "<br>Results: " + task.results + 
                 "<br><br><a href='internal.melscience.com/melchemistryprocess/'>MEL Chemistry process page</a>" + 
