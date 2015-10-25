@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Marketing Tools - MEL Science</title>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/bootstrap.js"></script>
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body style="padding-left: 30px; padding-top: 30px; padding-right: 30px;">
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="></a>
+        </div>                                                                                                       
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li style="color: #E0E0E0;"><a href="https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918" target="_blank">Google Sheet</a></li>
+            <li style="color: #E0E0E0;" class="active"><a href="index.html">Table</a></li>
+            <li style="color: #E0E0E0;"><a href="diagram.html">Diagram</a></li>
+            <li style="color: #E0E0E0;"><a href="start.html">New Set</a></li>
+            <li style="color: #E0E0E0;"><a href="https://melscience.com/internal/">Internal</a></li>
+            <li style="color: #E0E0E0;"><span style="margin-left: 30px;">Set: </span><select id="selection_set" style="color: black; margin-right: 30px; margin-bottom: 0px; margin-top: 15px;"></select></li>
+            <li style="color: #E0E0E0;">Responsible: <select id="selection_responsible" style="color: black; margin-bottom: 0px; margin-top: 15px;"></select></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+<style>
+</style>
+
+<div class="container-fluid" style="padding-top: 30px;">
+
+<h1>Sending emails to press</h1>
+<p>
+  This forms takes email addresses and names from <a href="https://docs.google.com/spreadsheets/d/1FU_WC0N9J0ATgsbnrailgyiECLfTtCamBUPkpcHhbP0/edit#gid=0">email table for sending</a> Google Sheet. Edit it to copy/paste needed emails.
+</p>
+
+<div id="contact-loading-status">
+<div id="loading-contacts">Loading contacts...</div>
+</div>
+
+<h2>Email form</h2>
+
+<form class="form-horizontal">
+  <div class="form-group">
+    <label for="emailfromemail" class="col-sm-2 control-label">From email</label>
+    <div class="col-sm-10">
+      <input type="email" class="form-control" id="emailfromemail" placeholder="Your email">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="emailfromname" class="col-sm-2 control-label">From name</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="emailfromname" placeholder="Your name">
+    </div>
+  </div>
+  <div class="form-group">
+    <label for="emailsubject" class="col-sm-2 control-label">Subject</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control" id="emailsubject" placeholder="Subject">
+    </div>
+  </div>
+  <div class="form-group">
+    <textarea class="form-control" rows="15" id="emailbody">Dear %name%,</textarea>
+  </div>
+</form>
+
+<div id="buttons-group">
+  <button class="btn btn-default btn-lg" onclick="sendTestEmails();">Send test to me</button>
+  <button class="btn btn-primary btn-lg" onclick="sendAllEmails();">Send all emails</button>
+</div>
+
+<div id="sending-status-group" style="display: none">
+<h3>Sending...</h3>
+</div>
+
+<script>
+function processBody(emailBody, fullname) {
+  var firstname = fullname.split(' ').slice(0, -1).join(' ');
+  var lastname = fullname.split(' ').slice(-1).join(' ');
+  return emailBody.replace("%name%", firstname);
+}
+
+function sendEmail(toEmail, toName) {
+  var fromEmail = $("#emailfromemail").val();
+  var fromName = $("#emailfromname").val();
+  var emailSubject = $("#emailsubject").val();
+  var emailBody = processBody($("#emailbody").val(), fromName);
+
+  $.ajax({
+    type: 'POST',
+    url: 'https://mandrillapp.com/api/1.0/messages/send.json',
+    data: {
+      'key': 'Tge2LRQL1Hk4rlhPes7qwQ',
+      'message': {
+        'from_email': fromEmail,
+        'from_name' : fromName,
+        'to': [
+            {
+              'email': toEmail,
+              'name': toName,
+              'type': 'to'
+            }
+          ],
+        'autotext': 'true',
+        'async': true,
+        'subject': emailSubject,
+        'text': emailBody
+      }
+    }
+   }).done(function(response) {
+     console.log("Email sent to " + toEmail);
+ });
+}
+
+function sendTestEmails() {
+  var fromEmail = $("#emailfromemail").val();
+  var fromName = $("#emailfromname").val();
+  sendEmail(fromEmail, fromName);
+  alert("Test email is sent to " + fromEmail);
+}   
+
+function sendAllEmails() {
+  $("#buttons-group").hide();
+  $("#sending-status-group").show();
+  for (var i=0; i<contacts.length; i++) {
+    sendEmail(contacts[i]["email"], contacts[i]["fullname"]);    
+    $("#sending-status-group").append($("<div>" + contacts[i]["email"] + "</div>"));
+  }
+  alert("" + contacts.length + " emails are sent.");
+}   
+
+
+var contacts = [];
+
+function addConactPreview(email, fullname) {
+  $("#contact-loading-status").append($("<div>" + email + " (" + fullname + ")</div>"));
+}
+
+function importEmails(googleSheetJson) {
+  var showContactCount = 5;
+  for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
+    var googleSheetJsonRecord = googleSheetJson.feed.entry[i];
+    var contact = {};
+    contact["email"] = googleSheetJsonRecord["gsx$"+"email"]["$t"];
+    contact["fullname"] = googleSheetJsonRecord["gsx$"+"name"]["$t"];
+    contacts.push(contact);
+    if (i<showContactCount) { 
+      addConactPreview(contact["email"], contact["fullname"]);
+    }
+  }
+  $("#loading-contacts").hide();
+  $("#contact-loading-status").append($("<div>" + contacts.length + " contacts loaded</div>"));
+//  $("#contact-loading-status").html();
+}
+
+</script>
+
+</div> <!-- /container -->
+
+<script src="https://spreadsheets.google.com/feeds/list/1FU_WC0N9J0ATgsbnrailgyiECLfTtCamBUPkpcHhbP0/od6/public/values?alt=json-in-script&callback=importEmails"></script>
+
+</body>
+</html>
