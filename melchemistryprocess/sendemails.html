@@ -107,7 +107,7 @@ function sendEmail(toEmail, toName) {
   var fromEmail = $("#emailfromemail").val();
   var fromName = $("#emailfromname").val();
   var emailSubject = $("#emailsubject").val();
-  var emailBody = processBody($("#emailbody").val(), fromName);
+  var emailBody = processBody($("#emailbody").val(), toName);
 
   $.ajax({
     type: 'POST',
