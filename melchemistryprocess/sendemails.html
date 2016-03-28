@@ -98,8 +98,15 @@
 
 <script>
 function processBody(emailBody, fullname) {
-  var firstname = fullname.split(' ').slice(0, -1).join(' ');
-  var lastname = fullname.split(' ').slice(-1).join(' ');
+  var firstname = "Sirs";
+  if (fullname.split(' ').length==1) {
+    firstname = fullname;
+  } else {
+    firstname = fullname.split(' ').slice(0, -1).join(' ');
+  }
+  console.log(emailBody);
+  emailBody = emailBody.replace(/\r?\n/g, "<br />");
+  console.log(emailBody);
   return emailBody.replace("%name%", firstname);
 }
 
@@ -125,10 +132,15 @@ function sendEmail(toEmail, toName) {
             }
           ],
         'autotext': 'true',
+        'track_opens': 'true',
+        'track_clicks': 'true',
+        'tags': [
+            '2015-11-16-test1'
+        ],
         'async': true,
         'subject': emailSubject,
-        'text': emailBody
-      }
+        'html': emailBody
+      }                        
     }
    }).done(function(response) {
      console.log("Email sent to " + toEmail);
@@ -159,21 +171,51 @@ function addConactPreview(email, fullname) {
   $("#contact-loading-status").append($("<div>" + email + " (" + fullname + ")</div>"));
 }
 
+function isEmailAlreadyAdded(email) {
+  for (var i=0; i<contacts.length; i++) {
+    if (contacts[i]["email"]==email) {
+      return true;
+    }
+  }
+  return false;
+}
+
+function isEmailInUnsubscribedList(email) {
+  if (email=="dollarhide.1@osu.edu") return true;
+  if (email=="dcharle@clemson.edu") return true;
+  if (email=="issues@cableone.net") return true;
+  if (email=="davebunnell@comcast.net") return true;
+  if (email=="nversel@medcitynews.com") return true;
+  if (email=="lisa.fleisher@wsj.com") return true;
+  if (email=="jcava15579@aol.com") return true;
+  if (email=="@jmedchem.acs.org") return true;
+  if (email=="ananyobhattacharya@economist.com") return true;
+  if (email=="julia_horton@ymail.com") return true;
+
+  return false;
+}
+
+function convertEmailToCanonicForm(email) {
+  return email.toLowerCase().trim();
+}
+
 function importEmails(googleSheetJson) {
   var showContactCount = 5;
   for (var i=0; i<googleSheetJson.feed.entry.length; i++) {
     var googleSheetJsonRecord = googleSheetJson.feed.entry[i];
     var contact = {};
-    contact["email"] = googleSheetJsonRecord["gsx$"+"email"]["$t"];
+    var email = convertEmailToCanonicForm(googleSheetJsonRecord["gsx$"+"email"]["$t"]);
     contact["fullname"] = googleSheetJsonRecord["gsx$"+"name"]["$t"];
-    contacts.push(contact);
-    if (i<showContactCount) { 
-      addConactPreview(contact["email"], contact["fullname"]);
+    if (!isEmailAlreadyAdded(email) && !isEmailInUnsubscribedList(email)) {
+      contact["email"] = email;
+      contacts.push(contact);
+      if (i<showContactCount) { 
+        addConactPreview(contact["email"], contact["fullname"]);
+      }
     }
   }
   $("#loading-contacts").hide();
   $("#contact-loading-status").append($("<div>" + contacts.length + " contacts loaded</div>"));
-//  $("#contact-loading-status").html();
 }
 
 </script>

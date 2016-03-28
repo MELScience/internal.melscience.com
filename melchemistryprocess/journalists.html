@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Press Tools - MEL Science</title>
+    <!-- Bootstrap Core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.10.9/css/jquery.dataTables.min.css" rel="stylesheet">
+    <script src="js/jquery.js"></script>
+    <script src="js/jquery.cookie.js"></script>
+    <script src="js/bootstrap.js"></script>
+    <script src="js/melpress.js"></script>
+    <script src="https://cdn.datatables.net/1.10.9/js/jquery.dataTables.min.js"></script>
+
+
+    <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+        <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+        <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+
+<body style="padding-left: 30px; padding-top: 30px; padding-right: 30px;">
+
+    <!-- Fixed navbar -->
+    <nav class="navbar navbar-inverse navbar-fixed-top">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="></a>
+        </div>                                                                                                       
+        <div id="navbar" class="navbar-collapse collapse">
+          <ul class="nav navbar-nav">
+            <li style="color: #E0E0E0;"><a href="https://docs.google.com/spreadsheets/d/1WqwknAu_mwQfkDtP4UcGZAix2zBwqUmp3A8XX5xUto8/edit#gid=448918918" target="_blank">Google Sheet</a></li>
+            <li style="color: #E0E0E0;" class="active"><a href="index.html">Table</a></li>
+            <li style="color: #E0E0E0;"><a href="diagram.html">Diagram</a></li>
+            <li style="color: #E0E0E0;"><a href="start.html">New Set</a></li>
+            <li style="color: #E0E0E0;"><a href="https://melscience.com/internal/">Internal</a></li>
+            <li style="color: #E0E0E0;"><span style="margin-left: 30px;">Set: </span><select id="selection_set" style="color: black; margin-right: 30px; margin-bottom: 0px; margin-top: 15px;"></select></li>
+            <li style="color: #E0E0E0;">Responsible: <select id="selection_responsible" style="color: black; margin-bottom: 0px; margin-top: 15px;"></select></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </nav>
+
+<style>
+</style>
+
+<div class="container-fluid" style="padding-top: 30px;">
+
+<h1>MEL Press</h1>
+<p>
+  All data is stored in <a href="https://docs.google.com/spreadsheets/d/1FU_WC0N9J0ATgsbnrailgyiECLfTtCamBUPkpcHhbP0/edit#gid=0">Journalists Google Sheet</a>. Make all changes there.
+</p>
+<p>
+  <select id="filter_category"></select>
+  <select id="filter_priority"></select>
+  <select id="filter_lang"></select>
+</p>
+<p>
+  <table id="example" class="display" width="100%"></table>
+</p>
+
+<script>
+function populateFilter(fieldName) {
+  var select = $('#filter_' + fieldName);
+  var arr = melPublications.getFieldValuesArray(fieldName);
+  console.log(arr);
+  select.append($("<option></option>").attr("value", "").text("All " + fieldName));
+  for (var i=0; i<arr.length; i++) {
+    var value = arr[i];
+    select.append($("<option></option>").attr("value", value).text(value));
+  }
+  select.change(function() {
+    alert("Handler for .change() called." + select.val());
+  });
+}
+
+function addFilterInfo(fieldName, arr) {
+  var val = $("#filter_" + fieldName).val();
+}
+
+function getFiltersInfo() {
+}
+
+$(document).ready(function() {
+//  populateFilter("category");
+//  populateFilter("priority");
+//  populateFilter("lang");
+
+  melJournalistsDataSet = melJournalists.generateDataSet(["publicationLink", "name", "position", "country", "city", "lang", "email", "publication"]);
+
+  $('#example').DataTable( {
+    data: melJournalistsDataSet,
+    "paging": false,
+    "stateSave": true,
+    columns: [
+      { title: "Publication", 
+        "render": function (data, type, full, meta ) {
+          if (data!=null) {
+            return '<a href="'+data.website+'" target="_blank">' + data.publication + ' [' + data.priority + ']' + '</a>';
+          } else {
+            console.log(full);
+            return full[7];
+          }
+        } 
+      },
+      { title: "Name" },
+      { title: "Position" },
+      { title: "Country" },
+      { title: "City" },
+      { title: "Lang" },
+      { title: "Email", 
+        "render": function (data, type, full, meta ) {
+          return '<a href="mail-to:'+data+'">' + data + '</a>';
+        } 
+      }
+    ]
+  });
+});
+</script>
+
+</div> <!-- /container -->
+
+<script src="https://spreadsheets.google.com/feeds/list/1-NQc5Z3Qq88Z5hHHheeLRTjiaBovMM4j7Pk9Jr8gJx4/oxqc4e7/public/values?alt=json-in-script&callback=importMelPublications"></script>
+<script src="https://spreadsheets.google.com/feeds/list/1-NQc5Z3Qq88Z5hHHheeLRTjiaBovMM4j7Pk9Jr8gJx4/o9doutf/public/values?alt=json-in-script&callback=importMelJournalists"></script>
+
+</body>
+</html>
